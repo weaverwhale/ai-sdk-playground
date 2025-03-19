@@ -5,7 +5,13 @@ import { groq } from '@ai-sdk/groq';
 import { deepseek } from '@ai-sdk/deepseek';
 import { cerebras } from '@ai-sdk/cerebras';
 import { google } from '@ai-sdk/google';
+// import { createVertex } from '@ai-sdk/google-vertex';
 import { defaultSystemPrompt } from './prompt';
+
+// const vertex = createVertex({
+//   project: 'shofifi',
+//   location: 'us-east5',
+// })
 
 export interface ModelProvider {
   id: string;
@@ -33,9 +39,9 @@ export const modelProviders: ModelProvider[] = [
   },
   {
     id: 'anthropic',
-    name: 'Anthropic (Claude 3 Opus)',
+    name: 'Anthropic (Claude 3.5 Sonnet)',
     available: checkApiKey(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC'),
-    model: anthropic('claude-3-opus-20240229'),
+    model: anthropic('claude-3-5-sonnet-latest'),
     defaultSystemPrompt
   },
   {
@@ -63,9 +69,16 @@ export const modelProviders: ModelProvider[] = [
     id: 'gemini',
     name: 'Google (Gemini 2.0 Flash)',
     available: checkApiKey(process.env.GEMINI_API_KEY, 'GEMINI'),
-    model: google('models/gemini-2.0-flash-exp'),
+    model: google('gemini-2.0-flash'),
     defaultSystemPrompt
   },
+  // {
+  //   id: 'gemini-vertex',
+  //   name: 'Google (Gemini 2.0 Flash Vertex)',
+  //   available: true,
+  //   model: vertex('gemini-2.0-flash'),
+  //   defaultSystemPrompt
+  // }
 ];
 
 export function getModelProviderById(id: string): ModelProvider | undefined {
