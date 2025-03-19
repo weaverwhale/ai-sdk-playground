@@ -1,8 +1,15 @@
 import { Message } from 'ai';
 import { getModelProviderById } from '../modelProviders';
 import { streamText } from 'ai';
+import { tools as toolsArray } from '../tools';
 
 const DEFAULT_MODEL_ID = 'openai';
+
+// Convert tools from array to object with tool names as keys
+const toolsObject = toolsArray.reduce((acc, tool) => {
+  acc[tool.name] = tool;
+  return acc;
+}, {} as Record<string, typeof toolsArray[0]>);
 
 export async function handleChatRequest(body: { 
   messages: Message[]; 
@@ -32,6 +39,7 @@ export async function handleChatRequest(body: {
       model,
       messages: messagesWithSystem,
       maxTokens: 1500,
+      tools: toolsObject
     });
 
     return result.toDataStreamResponse();
