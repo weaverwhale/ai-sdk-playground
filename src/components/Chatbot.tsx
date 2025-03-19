@@ -36,6 +36,7 @@ export default function Chatbot() {
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
   const [toolDescriptions, setToolDescriptions] = useState<Record<string, string>>({});
   const [activeToolCall, setActiveToolCall] = useState<{name: string, description?: string} | null>(null);
+  const [historyIndex, setHistoryIndex] = useState<number | null>(null);
   const isProcessingTool = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -205,6 +206,53 @@ export default function Chatbot() {
     reload();
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    // Get all user messages for history navigation
+    const userMessages = messages.filter(msg => msg.role === 'user');
+    
+    // Handle up arrow key press
+    if (event.key === 'ArrowUp') {
+      if (userMessages.length > 0) {
+        // If not already navigating history, start with the most recent message
+        if (historyIndex === null) {
+          setHistoryIndex(userMessages.length - 1);
+          setInput(userMessages[userMessages.length - 1].content);
+        } 
+        // If already navigating, go to previous message if available
+        else if (historyIndex > 0) {
+          const newIndex = historyIndex - 1;
+          setHistoryIndex(newIndex);
+          setInput(userMessages[newIndex].content);
+        }
+        
+        // Place cursor at the end of input
+        const inputElement = event.target as HTMLInputElement;
+        setTimeout(() => {
+          inputElement.selectionStart = inputElement.selectionEnd = inputElement.value.length;
+        }, 0);
+      }
+    }
+    
+    // Handle down arrow key press - navigate forward in history
+    else if (event.key === 'ArrowDown' && historyIndex !== null) {
+      if (historyIndex < userMessages.length - 1) {
+        // Move to more recent message
+        const newIndex = historyIndex + 1;
+        setHistoryIndex(newIndex);
+        setInput(userMessages[newIndex].content);
+      } else {
+        // Reached the end of history, clear the input
+        setHistoryIndex(null);
+        setInput('');
+      }
+    }
+    
+    // Reset history index when the user types
+    else if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') {
+      setHistoryIndex(null);
+    }
+  };
+
   const handleManualSubmit = async (e: React.FormEvent) => {
     if(isLoading) {
       return;
@@ -212,6 +260,7 @@ export default function Chatbot() {
     
     e.preventDefault();
     setErrorDetails(null);
+    setHistoryIndex(null); // Reset history index after sending a message
     
     try {
       await handleSubmit(e);
@@ -403,6 +452,7 @@ export default function Chatbot() {
         <input
           value={input}
           onChange={(event) => setInput(event.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Ask me anything..."
           className="input-field"
         />
