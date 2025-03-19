@@ -38,8 +38,10 @@ export async function handleChatRequest(body: {
     const result = streamText({
       model,
       messages: messagesWithSystem,
-      maxTokens: 1500,
-      tools: toolsObject
+      maxTokens: 5000,
+      tools: toolsObject,
+      experimental_continueSteps: true,
+      maxSteps: 10
     });
 
     return result.toDataStreamResponse();
