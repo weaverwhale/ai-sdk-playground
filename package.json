@@ -16,6 +16,11 @@
     "start:server": "npm run server"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.1.18",
+    "@ai-sdk/cerebras": "^0.1.16",
+    "@ai-sdk/deepseek": "^0.1.16",
+    "@ai-sdk/google": "^1.1.26",
+    "@ai-sdk/groq": "^1.1.15",
     "@ai-sdk/openai": "^1.2.6",
     "@ai-sdk/react": "^1.1.24",
     "ai": "^4.1.63",

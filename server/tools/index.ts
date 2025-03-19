@@ -1,3 +1,3 @@
-import { createMoby } from './Moby';
+import { moby } from './Moby';
 
-export const tools = [createMoby()];
+export const tools = [moby];

@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import { handleChatRequest } from '../server/api/chatApi';
 import { Readable } from 'stream';
+import { getAvailableModelProviders } from './api/modelProviders';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -25,7 +26,11 @@ app.use((req, res, next) => {
 
 // Simple health check endpoint
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    models: getAvailableModelProviders().map(p => ({ id: p.id, name: p.name }))
+  });
 });
 
 // Helper function to convert Web ReadableStream to Node.js stream
@@ -60,7 +65,7 @@ function webToNodeStream(webStream: ReadableStream): Readable {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { messages } = req.body;
+    const { messages, modelId } = req.body;
     
     if (!messages || !Array.isArray(messages)) {
       console.error('[SERVER] Invalid messages format:', req.body);
@@ -68,8 +73,7 @@ app.post('/api/chat', async (req, res) => {
     }
     
     console.log('[SERVER] Processing chat request...');
-    const stream = await handleChatRequest(messages);
-    const response = await stream.toDataStreamResponse();
+    const response = await handleChatRequest({ messages, modelId });
     
     // Set response headers
     for (const [key, value] of response.headers.entries()) {

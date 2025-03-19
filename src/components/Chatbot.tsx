@@ -16,15 +16,23 @@ interface ChatMessage {
   toolCalls?: ToolCall[];
 }
 
+interface Model {
+  id: string;
+  name: string;
+}
+
 export default function Chatbot() {
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [serverInfo, setServerInfo] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
-
+  const [availableModels, setAvailableModels] = useState<Model[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('openai');
+  
   // Use the API endpoint being proxied by Vite
   const { messages, input, setInput, handleSubmit, isLoading, error, reload } = useChat({
     api: '/api/chat',
     maxSteps: 5, // Allow multiple tool calls in sequence
+    body: { modelId: selectedModel }, // Pass the selected model ID to the API
     onError: (error) => {
       console.error('Chat error:', error);
       
@@ -56,8 +64,23 @@ export default function Chatbot() {
         const response = await fetch('/api/health');
         const data = await response.json();
         console.log('Server health check:', data);
+        
         setServerStatus('online');
         setServerInfo(`Server is online (as of ${new Date().toLocaleTimeString()})`);
+        
+        // Get available models from the health endpoint
+        if (data.models && Array.isArray(data.models)) {
+          setAvailableModels(data.models);
+          
+          // If no models are available, show error
+          if (data.models.length === 0) {
+            setErrorDetails('No AI models are available. Please check your API keys.');
+          }
+          // If there are models and none is selected, select the first one
+          else if (data.models.length > 0 && (!selectedModel || !data.models.find((m: Model) => m.id === selectedModel))) {
+            setSelectedModel(data.models[0].id);
+          }
+        }
       } catch (error) {
         console.error('Server health check failed:', error);
         if (retryCount < maxRetries) {
@@ -81,6 +104,13 @@ export default function Chatbot() {
     // Clean up interval
     return () => clearInterval(intervalId);
   }, []);
+  
+  // Reset the chat when model changes
+  useEffect(() => {
+    if (messages.length > 0) {
+      reload();
+    }
+  }, [selectedModel]);
 
   const handleRetry = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -97,6 +127,10 @@ export default function Chatbot() {
     } catch (error) {
       console.error('Manual submit error:', error);
     }
+  };
+  
+  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedModel(e.target.value);
   };
 
   if (serverStatus === 'checking') {
@@ -130,6 +164,25 @@ export default function Chatbot() {
   return (
     <div className="chatbot-container">
       {serverInfo && <div className="server-status">{serverInfo}</div>}
+      
+      {/* Model selector */}
+      <div className="model-selector">
+        <label htmlFor="model-select">AI Model:</label>
+        <select
+          id="model-select"
+          value={selectedModel}
+          onChange={handleModelChange}
+          disabled={isLoading || availableModels.length === 0}
+        >
+          {availableModels.length === 0 && <option value="">No models available</option>}
+          {availableModels.map(model => (
+            <option key={model.id} value={model.id}>
+              {model.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      
       <div className="chat-messages">
         {messages.map((message, index) => (
           <div key={index} className={`message ${message.role}`}>

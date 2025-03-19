@@ -1,33 +1,49 @@
-import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
-import { tools } from '../tools';
+import { Message } from 'ai';
+import { getModelProviderById } from './modelProviders';
 
-export interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+// Default model ID if not specified by client
+const DEFAULT_MODEL_ID = 'openai';
 
-/**
- * Handle a chat request and return a stream of text.
- */
-export async function handleChatRequest(messages: Message[]) {
-  console.log('[API] Processing chat request with messages:', messages);
-  
-  // Add logging to check environment variables
-  console.log('[API] OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY);
-  
-  if (!process.env.OPENAI_API_KEY) {
-    console.error('[API] OPENAI_API_KEY environment variable is not set!');
-    throw new Error('OPENAI_API_KEY is not set in environment variables');
+// Handle chat request from the client
+export async function handleChatRequest(body: { 
+  messages: Message[]; 
+  modelId?: string;
+}) {
+  try {
+    // Get model ID from request or use default
+    const modelId = body.modelId || DEFAULT_MODEL_ID;
+    
+    // Get the requested model provider
+    const modelProvider = getModelProviderById(modelId);
+    
+    // Check if model provider is found and available
+    if (!modelProvider) {
+      throw new Error(`Model provider '${modelId}' not found`);
+    }
+    
+    if (!modelProvider.available) {
+      throw new Error(`Model provider '${modelId}' is not available. API key might be missing.`);
+    }
+    
+    // Get model instance
+    const model = modelProvider.getModel();
+    
+    // Generate response from the AI model
+    const response = await model.generateText({
+      messages: body.messages,
+      maxTokens: 1500,
+    });
+    
+    // Return the response as a streaming response
+    const headers = new Headers();
+    headers.set('Content-Type', 'text/plain; charset=utf-8');
+    
+    return new Response(response.textStream, {
+      headers,
+      status: 200,
+    });
+  } catch (error) {
+    console.error('[API] Chat request error:', error);
+    throw error;
   }
-  
-  // Configure the OpenAI client with the API key from environment
-  const model = openai('gpt-4o');
-  
-  return streamText({
-    model,
-    system: 'You are a helpful assistant. You can help with getting information about weather and location, and telling the current time.',
-    messages,
-    tools,
-  });
 } 
