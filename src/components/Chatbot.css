@@ -63,17 +63,93 @@
   padding: 0.5rem;
   margin-top: 0.5rem;
   font-size: 0.85rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tool-header {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.tool-header:hover {
+  background-color: #f1f5f9;
 }
 
 .tool-name {
   font-weight: bold;
   margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tool-icon {
+  font-size: 1rem;
+  margin-right: 0.25rem;
+}
+
+.toggle-icon {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.tool-description {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+  font-style: italic;
+}
+
+.tool-section-label {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: #475569;
 }
 
 .tool-args, .tool-response {
   white-space: pre-wrap;
   word-break: break-word;
   margin-bottom: 0.25rem;
+  padding: 0.5rem;
+  border-left: 2px solid #e2e8f0;
+  margin-left: 0.5rem;
+}
+
+.tool-args pre {
+  margin: 0;
+  font-family: monospace;
+  font-size: 0.8rem;
+  background-color: #f1f5f9;
+  padding: 0.5rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.tool-in-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #fff8e1;
+  border-left: 3px solid #ffc107;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+}
+
+.tool-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #ffc107;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 .chat-input {
@@ -434,4 +510,56 @@
 .tool-response-content table {
   font-size: 0.85rem;
   margin: 0.25rem 0;
+}
+
+/* Tool indicator styles */
+.tool-indicator {
+  display: flex;
+  align-items: center;
+  background-color: #f0f9ff;
+  border-left: 3px solid #3b82f6;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.tool-indicator-icon {
+  margin-right: 0.75rem;
+}
+
+.tool-indicator-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  border-left-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.tool-indicator-content {
+  flex: 1;
+}
+
+.tool-indicator-name {
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 0.25rem;
+}
+
+.tool-indicator-label {
+  color: #6b7280;
+  font-weight: normal;
+}
+
+.tool-indicator-description {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-style: italic;
 } 

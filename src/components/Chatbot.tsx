@@ -1,21 +1,25 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './Chatbot.css';
+import ToolIndicator from './ToolIndicator';
 
 interface ToolCall {
   name: string;
   args: Record<string, unknown>;
   output?: string;
+  description?: string;
+  status?: 'running' | 'completed' | 'error';
 }
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   toolCalls?: ToolCall[];
+  isToolInProgress?: boolean;
 }
 
 interface Model {
@@ -29,21 +33,20 @@ export default function Chatbot() {
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [availableModels, setAvailableModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('openai');
+  const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
+  const [toolDescriptions, setToolDescriptions] = useState<Record<string, string>>({});
+  const [activeToolCall, setActiveToolCall] = useState<{name: string, description?: string} | null>(null);
+  const isProcessingTool = useRef(false);
   
-  // Use the API endpoint being proxied by Vite
   const { messages, input, setInput, handleSubmit, isLoading, error, reload } = useChat({
     api: '/api/chat',
-    maxSteps: 5, // Allow multiple tool calls in sequence
-    body: { modelId: selectedModel }, // Pass the selected model ID to the API
+    maxSteps: 5,
+    body: { modelId: selectedModel },
     onError: (error) => {
-      console.error('Chat error:', error);
-      
-      // Enhance error reporting
       let errorMessage = 'Unknown error occurred';
       
       if (error instanceof Error) {
         errorMessage = error.message;
-        console.error('Error stack:', error.stack);
       } else if (typeof error === 'string') {
         errorMessage = error;
       } else if (error && typeof error === 'object') {
@@ -51,55 +54,86 @@ export default function Chatbot() {
       }
       
       setErrorDetails(errorMessage);
+      isProcessingTool.current = false;
+    },
+    onToolCall: (event) => {
+      isProcessingTool.current = true;
+      
+      try {
+        let toolName = "Unknown Tool";
+        
+        if (event.toolCall && typeof event.toolCall === 'object') {
+          if ('name' in event.toolCall) {
+            toolName = (event.toolCall as {name: string}).name;
+          }
+          else if ('args' in event.toolCall && event.toolCall.args) {
+            if ('function' in (event.toolCall.args as Record<string, unknown>)) {
+              toolName = (event.toolCall.args as {function: string}).function;
+            }
+            else if (typeof event.toolCall.args === 'object') {
+              const keys = Object.keys(event.toolCall.args as object);
+              if (keys.length > 0) {
+                toolName = keys[0];
+              }
+            }
+          }
+        }
+        
+        setActiveToolCall({
+          name: toolName,
+          description: toolDescriptions[toolName] || "Using tool to retrieve information"
+        });
+      } catch {
+        setActiveToolCall({
+          name: "Using AI Tools",
+          description: "Processing your request with specialized tools"
+        });
+      }
     }
   });
 
-  // Add an effect to check API connectivity on load with retries
+  useEffect(() => {
+    if (!isLoading && isProcessingTool.current) {
+      isProcessingTool.current = false;
+      setActiveToolCall(null);
+    }
+  }, [isLoading]);
+
   useEffect(() => {
     let retryCount = 0;
     const maxRetries = 5;
-    const retryDelay = 1500; // 1.5 seconds between retries
+    const retryDelay = 1500;
     
     const checkServerHealth = async () => {
       try {
-        console.log('Checking server health...');
         const response = await fetch('/api/health');
-        const data = await response.json();
-        console.log('Server health check:', data);
+        await response.json();
         
         setServerStatus('online');
         setServerInfo(`Server is online (as of ${new Date().toLocaleTimeString()})`);
         
-        // Fetch available models from a dedicated models endpoint
         try {
-          console.log('Fetching available models...');
           const modelsResponse = await fetch('/api/models');
           const modelsData = await modelsResponse.json();
-          console.log('Available models:', modelsData);
           
           if (modelsData && Array.isArray(modelsData.models)) {
             setAvailableModels(modelsData.models);
             
-            // If no models are available, show error
             if (modelsData.models.length === 0) {
               setErrorDetails('No AI models are available. Please check your API keys.');
             }
-            // If there are models and none is selected, select the first one
             else if (modelsData.models.length > 0 && (!selectedModel || !modelsData.models.find((m: Model) => m.id === selectedModel))) {
               setSelectedModel(modelsData.models[0].id);
             }
           } else {
             setErrorDetails('Failed to retrieve model information from the server.');
           }
-        } catch (modelError) {
-          console.error('Error fetching models:', modelError);
+        } catch {
           setErrorDetails('Failed to fetch available AI models. Please try again later.');
         }
-      } catch (error) {
-        console.error('Server health check failed:', error);
+      } catch {
         if (retryCount < maxRetries) {
           retryCount++;
-          console.log(`Retrying in ${retryDelay}ms... (${retryCount}/${maxRetries})`);
           setTimeout(checkServerHealth, retryDelay);
         } else {
           setServerStatus('offline');
@@ -110,21 +144,39 @@ export default function Chatbot() {
 
     checkServerHealth();
     
-    // Set up interval to check server health periodically
     const intervalId = setInterval(() => {
       checkServerHealth();
-    }, 30000); // Check every 30 seconds
+    }, 30000);
     
-    // Clean up interval
     return () => clearInterval(intervalId);
   }, []);
   
-  // Reset the chat when model changes
   useEffect(() => {
     if (messages.length > 0) {
       reload();
     }
   }, [selectedModel]);
+
+  useEffect(() => {
+    const fetchToolDescriptions = async () => {
+      try {
+        const response = await fetch('/api/tools');
+        const data = await response.json();
+        
+        if (data && Array.isArray(data.tools)) {
+          const descriptions: Record<string, string> = {};
+          data.tools.forEach((tool: { name: string; description: string }) => {
+            descriptions[tool.name] = tool.description || 'No description available';
+          });
+          setToolDescriptions(descriptions);
+        }
+      } catch {
+        // Silently fail
+      }
+    };
+    
+    fetchToolDescriptions();
+  }, []);
 
   const handleRetry = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -142,13 +194,21 @@ export default function Chatbot() {
     
     try {
       await handleSubmit(e);
-    } catch (error) {
-      console.error('Manual submit error:', error);
+    } catch {
+      // Error handled by onError callback
     }
   };
   
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedModel(e.target.value);
+  };
+
+  const toggleToolExpansion = (messageIdx: number, toolIdx: number) => {
+    const key = `${messageIdx}-${toolIdx}`;
+    setExpandedTools(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
   };
 
   if (serverStatus === 'checking') {
@@ -201,34 +261,91 @@ export default function Chatbot() {
       </div>
       
       <div className="chat-messages">
-        {messages.map((message, index) => (
-          <div key={index} className={`message ${message.role}`}>
-            <div className="message-content">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {message.content}
-              </ReactMarkdown>
-            </div>
-            {(message as ChatMessage).toolCalls?.map((toolCall, idx) => (
-              <div key={idx} className="tool-invocation">
-                <div className="tool-name">Tool: {toolCall.name}</div>
-                <div className="tool-args">Arguments: {JSON.stringify(toolCall.args)}</div>
-                {toolCall.output && (
-                  <div className="tool-response">
-                    <div className="tool-response-label">Response:</div>
-                    <div className="tool-response-content">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {toolCall.output}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                )}
+        {messages.map((message, index) => {
+          const toolCalls = (message as ChatMessage).toolCalls || [];
+          const isToolInProgress = (message as ChatMessage).isToolInProgress;
+          
+          if (message.role === 'assistant' && !message.content.trim() && isProcessingTool.current) {
+            return null;
+          }
+          
+          return (
+            <div key={index} className={`message ${message.role}`}>
+              <div className="message-content">
+                {message.content.trim() ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.content}
+                  </ReactMarkdown>
+                ) : message.role === 'assistant' && toolCalls.length > 0 ? (
+                  <div className="empty-message-placeholder">Processing response...</div>
+                ) : null}
               </div>
-            ))}
-          </div>
-        ))}
+              
+              {isToolInProgress && (
+                <div className="tool-in-progress">
+                  <div className="tool-spinner"></div>
+                  <span>Tool execution in progress...</span>
+                </div>
+              )}
+              
+              {toolCalls.map((toolCall, idx) => {
+                const isExpanded = expandedTools[`${index}-${idx}`] !== false;
+                
+                return (
+                  <div key={idx} className="tool-invocation">
+                    <div 
+                      className="tool-header"
+                      onClick={() => toggleToolExpansion(index, idx)}
+                    >
+                      <div className="tool-name">
+                        <span className="tool-icon">🔧</span>
+                        Tool: {toolCall.name}
+                        <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
+                      </div>
+                      <div className="tool-description">
+                        {toolDescriptions[toolCall.name] || ''}
+                      </div>
+                    </div>
+                    
+                    {isExpanded && (
+                      <>
+                        <div className="tool-args">
+                          <div className="tool-section-label">Arguments:</div>
+                          <pre>{JSON.stringify(toolCall.args, null, 2)}</pre>
+                        </div>
+                        {toolCall.output && (
+                          <div className="tool-response">
+                            <div className="tool-section-label">Response:</div>
+                            <div className="tool-response-content">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {toolCall.output}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
         {isLoading && (
           <div className="message assistant">
-            <div className="message-content">Thinking...</div>
+            <div className="message-content">
+              {activeToolCall ? (
+                <div className="thinking-with-tool">
+                  <ToolIndicator 
+                    toolName={activeToolCall.name} 
+                    isActive={true} 
+                    description={activeToolCall.description}
+                  />
+                </div>
+              ) : (
+                "Thinking..."
+              )}
+            </div>
           </div>
         )}
         {error && (

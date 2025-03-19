@@ -4,6 +4,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { handleChatRequest } from '../server/api/chatApi';
+import { handleToolsRequest } from '../server/api/toolsApi';
 import { Readable } from 'stream';
 import { getAvailableModelProviders } from './modelProviders';
 
@@ -42,6 +43,26 @@ app.get('/api/models', (_req, res) => {
   } catch (error) {
     console.error('[SERVER] Error getting models:', error);
     res.status(500).json({ error: 'Failed to fetch available models' });
+  }
+});
+
+// Add new endpoint for tools information
+app.get('/api/tools', async (_req, res) => {
+  try {
+    console.log('[SERVER] Getting tools information...');
+    const response = await handleToolsRequest();
+    
+    // Set response headers
+    for (const [key, value] of response.headers.entries()) {
+      res.setHeader(key, value);
+    }
+    
+    // Get the response body
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('[SERVER] Error getting tools info:', error);
+    res.status(500).json({ error: 'Failed to fetch tools information' });
   }
 });
 
