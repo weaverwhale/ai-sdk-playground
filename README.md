@@ -13,11 +13,11 @@ A simple chatbot application built with React and the AI SDK that demonstrates u
 
 ## Technologies Used
 
-- React 19
-- AI SDK (OpenAI integration)
-- Express (for the API server)
+- React
+- AI SDK
+- Express
 - TypeScript
-- Vite (for frontend development)
+- Vite
 
 ## Getting Started
 
@@ -50,18 +50,7 @@ This will start both the frontend and backend servers using concurrently.
 
 Once the application is running, you can interact with the chatbot by typing messages in the input field. Try asking:
 
-- "What's my location?"
-- "What's the weather like?"
-- "What time is it?"
+- "What's my roas?"
+- "Forecast my sales next month"
 
 The chatbot will use the appropriate tools to respond to your queries.
-
-## Project Structure
-
-- `src/components/Chatbot.tsx`: The main React component for the chat interface
-- `src/api/chatApi.ts`: The API handlers and tool definitions
-- `server.js`: Express server for handling API requests
-
-## License
-
-MIT

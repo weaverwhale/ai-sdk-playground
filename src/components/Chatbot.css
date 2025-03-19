@@ -1,6 +1,6 @@
 .chatbot-container {
   width: 100%;
-  max-width: 700px;
+  max-width: 600px;
   margin: 0 auto;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -610,4 +610,46 @@
 
 .thinking-with-tool {
   width: 100%;
+}
+
+/* Mermaid Diagram Styles */
+.mermaid-diagram-wrapper {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  overflow-x: auto;
+}
+
+.mermaid-diagram {
+  display: flex;
+  justify-content: center;
+  min-height: 50px;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-error {
+  color: #ef4444;
+  padding: 0.5rem;
+  background-color: #fee2e2;
+  border-radius: 4px;
+  border-left: 3px solid #ef4444;
+}
+
+/* Custom code fence styles for mermaid */
+.message-content pre.mermaid-pre {
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.message-content pre.mermaid-pre code {
+  background-color: transparent;
+  padding: 0;
+  border: none;
 } 

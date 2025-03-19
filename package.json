@@ -30,10 +30,13 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.18.3",
+    "mermaid": "^11.5.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
+    "react-mermaid-js": "^0.0.1",
     "regression": "^2.0.1",
+    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "uuid": "^11.1.0",
     "zod": "^3.22.4"

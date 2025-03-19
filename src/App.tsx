@@ -4,7 +4,7 @@ import Chatbot from './components/Chatbot'
 function App() {
   return (
     <div className="app-container">
-      <h1>AI SDK Chatbot with Tools</h1>
+      <h1>AI SDK</h1>
       <Chatbot />
       <footer>
         <p>Built with React, AI SDK, and Vite</p>

@@ -4,8 +4,10 @@ import { useChat } from '@ai-sdk/react';
 import { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import './Chatbot.css';
 import ToolIndicator from './ToolIndicator';
+import MermaidDiagram from './MermaidDiagram';
 
 interface ToolCall {
   name: string;
@@ -26,6 +28,25 @@ interface Model {
   id: string;
   name: string;
 }
+
+// Create a more permissive code component for ReactMarkdown
+const CodeBlock = (props: any) => {
+  const { className, children } = props;
+  const language = className ? className.replace('language-', '') : '';
+  const content = String(children).trim();
+  
+  // Handle mermaid diagrams
+  if (language === 'mermaid') {
+    return <MermaidDiagram chart={content} />;
+  }
+  
+  // Regular code blocks
+  return (
+    <pre className={className}>
+      <code className={className}>{content}</code>
+    </pre>
+  );
+};
 
 export default function Chatbot() {
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
@@ -343,7 +364,13 @@ export default function Chatbot() {
             <div key={index} className={`message ${message.role}`}>
               <div className="message-content">
                 {message.content.trim() ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={{
+                      code: CodeBlock,
+                    }}
+                  >
                     {message.content}
                   </ReactMarkdown>
                 ) : message.role === 'assistant' && toolCalls.length > 0 ? (
@@ -392,7 +419,13 @@ export default function Chatbot() {
                           <div className="tool-response">
                             <div className="tool-section-label">Response:</div>
                             <div className="tool-response-content">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              <ReactMarkdown 
+                                remarkPlugins={[remarkGfm]}
+                                rehypePlugins={[rehypeRaw]}
+                                components={{
+                                  code: CodeBlock,
+                                }}
+                              >
                                 {toolCall.output}
                               </ReactMarkdown>
                             </div>
