@@ -68,15 +68,15 @@ export const modelProviders: ModelProvider[] = [
   {
     id: 'gemini',
     name: 'Google (Gemini 2.0 Flash)',
-    available: checkApiKey(process.env.GEMINI_API_KEY, 'GEMINI'),
-    model: google('gemini-2.0-flash'),
+    available: checkApiKey(process.env.GOOGLE_GENERATIVE_AI_API_KEY, 'GEMINI'),
+    model: google('gemini-2.0-flash-001'),
     defaultSystemPrompt
   },
   // {
   //   id: 'gemini-vertex',
   //   name: 'Google (Gemini 2.0 Flash Vertex)',
   //   available: true,
-  //   model: vertex('gemini-2.0-flash'),
+  //   model: vertex('gemini-2.0-flash-001'),
   //   defaultSystemPrompt
   // }
 ];
