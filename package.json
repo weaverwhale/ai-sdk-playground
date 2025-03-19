@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "client": "vite",
-    "server": "tsx src/server.ts",
+    "server": "tsx server/server.ts",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "dev:seq": "npm run server & sleep 2 && npm run client",
     "build": "tsc -b && vite build",

@@ -3,7 +3,7 @@ import 'dotenv/config';
 
 import express from 'express';
 import cors from 'cors';
-import { handleChatRequest } from './api/chatApi';
+import { handleChatRequest } from '../server/api/chatApi';
 import { Readable } from 'stream';
 
 const app = express();
