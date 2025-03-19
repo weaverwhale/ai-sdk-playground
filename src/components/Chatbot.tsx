@@ -369,7 +369,14 @@ export default function Chatbot() {
                   />
                 </div>
               ) : (
-                "Thinking..."
+                <div className="thinking-animation">
+                  <span className="thinking-text">Thinking</span>
+                  <div className="thinking-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
