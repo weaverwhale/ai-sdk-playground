@@ -260,7 +260,6 @@
   padding: 0.25rem 0.5rem;
   background-color: #f3f4f6;
   border-radius: 4px;
-  margin-bottom: 0.5rem;
   text-align: center;
   color: #4b5563;
 }
@@ -283,7 +282,6 @@
   margin-bottom: 15px;
   background-color: #f8f9fa;
   padding: 10px;
-  border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 

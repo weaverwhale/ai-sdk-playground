@@ -37,6 +37,8 @@ export default function Chatbot() {
   const [toolDescriptions, setToolDescriptions] = useState<Record<string, string>>({});
   const [activeToolCall, setActiveToolCall] = useState<{name: string, description?: string} | null>(null);
   const isProcessingTool = useRef(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   
   const { messages, input, setInput, handleSubmit, isLoading, error, reload } = useChat({
     api: '/api/chat',
@@ -69,6 +71,47 @@ export default function Chatbot() {
       });
     }
   });
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Also scroll to bottom when loading state changes
+  useEffect(() => {
+    scrollToBottom();
+  }, [isLoading]);
+
+  // Set up mutation observer to detect content streaming and scroll as it comes in
+  useEffect(() => {
+    if (!chatContainerRef.current) return;
+
+    // Create an observer that will watch for DOM changes
+    const observer = new MutationObserver(() => {
+      // Check if we should scroll (if user is near bottom already)
+      const container = chatContainerRef.current!;
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      
+      if (isNearBottom || isLoading) {
+        scrollToBottom();
+      }
+    });
+
+    // Start observing the chat container
+    observer.observe(chatContainerRef.current, {
+      childList: true,  // Watch for changes to the direct children
+      subtree: true,    // Watch for changes to all descendants
+      characterData: true // Watch for changes to text content
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isLoading]);
 
   useEffect(() => {
     if (!isLoading && isProcessingTool.current) {
@@ -238,7 +281,7 @@ export default function Chatbot() {
         </select>
       </div>
       
-      <div className="chat-messages">
+      <div className="chat-messages" ref={chatContainerRef}>
         {messages.map((message, index) => {
           const toolCalls = (message as ChatMessage).toolCalls || [];
           const isToolInProgress = (message as ChatMessage).isToolInProgress;
@@ -347,6 +390,7 @@ export default function Chatbot() {
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
       <form className="chat-input" onSubmit={handleManualSubmit}>
         <input
