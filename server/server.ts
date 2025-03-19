@@ -5,10 +5,10 @@ import express from 'express';
 import cors from 'cors';
 import { handleChatRequest } from '../server/api/chatApi';
 import { Readable } from 'stream';
-import { getAvailableModelProviders } from './api/modelProviders';
+import { getAvailableModelProviders } from './modelProviders';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 1753;
 
 // Configure CORS to accept requests from the Vite dev server
 app.use(cors({

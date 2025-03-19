@@ -44,7 +44,7 @@ npm run dev
 This will start both the frontend and backend servers using concurrently.
 
 - The React frontend will be available at: http://localhost:5173
-- The Express API runs at: http://localhost:3001
+- The Express API runs at: http://localhost:1753
 
 ## Usage
 
