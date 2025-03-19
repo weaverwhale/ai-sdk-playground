@@ -133,6 +133,10 @@ export default function Chatbot() {
   };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
+    if(isLoading) {
+      return;
+    }
+    
     e.preventDefault();
     setErrorDetails(null);
     
@@ -250,7 +254,6 @@ export default function Chatbot() {
           onChange={(event) => setInput(event.target.value)}
           placeholder="Ask me anything..."
           className="input-field"
-          disabled={isLoading}
         />
         <button 
           className="send-button"

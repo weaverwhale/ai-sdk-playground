@@ -7,6 +7,7 @@ type UrbanDictionaryParams = {
 };
 
 const urbanDictionary = {
+  name: 'urbanDictionary',
   description: 'Useful for looking up slang definitions and internet culture terms',
   parameters: z.object({
     term: z

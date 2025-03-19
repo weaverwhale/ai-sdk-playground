@@ -1,10 +1,11 @@
+import type { LanguageModelV1 } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { groq } from '@ai-sdk/groq';
 import { deepseek } from '@ai-sdk/deepseek';
 import { cerebras } from '@ai-sdk/cerebras';
 import { google } from '@ai-sdk/google';
-import type { LanguageModelV1 } from 'ai';
+import { defaultSystemPrompt } from './prompt';
 
 export interface ModelProvider {
   id: string;
@@ -28,21 +29,21 @@ export const modelProviders: ModelProvider[] = [
     name: 'OpenAI (GPT-4o Mini)',
     available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
     model: openai('gpt-4o-mini'),
-    defaultSystemPrompt: 'You are a helpful assistant. You can help with getting information about weather and location, and telling the current time.',
+    defaultSystemPrompt
   },
   {
     id: 'anthropic',
     name: 'Anthropic (Claude 3 Opus)',
     available: checkApiKey(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC'),
     model: anthropic('claude-3-opus-20240229'),
-    defaultSystemPrompt: 'You are Claude, a helpful AI assistant by Anthropic. You can help with getting information about weather and location, and telling the current time.',
+    defaultSystemPrompt
   },
   {
     id: 'groq',
     name: 'Groq (Llama 3)',
     available: checkApiKey(process.env.GROQ_API_KEY, 'GROQ'),
     model: groq('llama3-8b-8192'),
-    defaultSystemPrompt: 'You are a helpful AI assistant running on Groq. You can help with getting information about weather and location, and telling the current time.',
+    defaultSystemPrompt
   },
   {
     id: 'deepseek',
@@ -56,14 +57,14 @@ export const modelProviders: ModelProvider[] = [
     name: 'Llama 3.3 70B (Cerebras)',
     available: checkApiKey(process.env.CEREBRAS_API_KEY, 'CEREBRAS'),
     model: cerebras('llama-3.3-70b'),
-    defaultSystemPrompt: 'You are a helpful AI assistant powered by Cerebras. You can help with getting information about weather and location, and telling the current time.',
+    defaultSystemPrompt
   },
   {
     id: 'gemini',
     name: 'Google (Gemini 2.0 Flash)',
     available: checkApiKey(process.env.GEMINI_API_KEY, 'GEMINI'),
     model: google('models/gemini-2.0-flash-exp'),
-    defaultSystemPrompt: 'You are a helpful AI assistant powered by Google Gemini. You can help with getting information about weather and location, and telling the current time.',
+    defaultSystemPrompt
   },
 ];
 

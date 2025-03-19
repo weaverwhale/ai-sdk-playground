@@ -21,9 +21,16 @@ export async function handleChatRequest(body: {
     }
     
     const model = modelProvider.model;
+    
+    // Add the system message to the beginning of the messages array
+    const messagesWithSystem = [
+      { role: 'system', content: modelProvider.defaultSystemPrompt } as Message,
+      ...body.messages
+    ];
+    
     const result = streamText({
       model,
-      messages: body.messages,
+      messages: messagesWithSystem,
       maxTokens: 1500,
     });
 

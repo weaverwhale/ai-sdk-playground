@@ -15,6 +15,7 @@ type MobyParams = {
 };
 
 const moby = {
+  name: 'moby',
   description: "Useful for getting e-commerce analytics and insights from Triple Whale's AI, Moby.",
   parameters: z.object({
     question: z

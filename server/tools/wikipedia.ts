@@ -6,6 +6,7 @@ type WikipediaParams = {
 };
 
 const wikipedia = {
+  name: 'wikipedia',
   description: 'Useful for getting quick summaries from Wikipedia',
   parameters: z.object({
     query: z.string().describe('The topic to search on Wikipedia'),
