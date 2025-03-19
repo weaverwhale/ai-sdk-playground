@@ -5,9 +5,6 @@ function App() {
   return (
     <div className="app-container">
       <h1>AI SDK Chatbot with Tools</h1>
-      <p className="description">
-        This is a simple chatbot that demonstrates using AI SDK with tools. Try asking about your location, the weather, or the current time.
-      </p>
       <Chatbot />
       <footer>
         <p>Built with React, AI SDK, and Vite</p>

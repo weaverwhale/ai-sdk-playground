@@ -68,18 +68,30 @@ export default function Chatbot() {
         setServerStatus('online');
         setServerInfo(`Server is online (as of ${new Date().toLocaleTimeString()})`);
         
-        // Get available models from the health endpoint
-        if (data.models && Array.isArray(data.models)) {
-          setAvailableModels(data.models);
+        // Fetch available models from a dedicated models endpoint
+        try {
+          console.log('Fetching available models...');
+          const modelsResponse = await fetch('/api/models');
+          const modelsData = await modelsResponse.json();
+          console.log('Available models:', modelsData);
           
-          // If no models are available, show error
-          if (data.models.length === 0) {
-            setErrorDetails('No AI models are available. Please check your API keys.');
+          if (modelsData && Array.isArray(modelsData.models)) {
+            setAvailableModels(modelsData.models);
+            
+            // If no models are available, show error
+            if (modelsData.models.length === 0) {
+              setErrorDetails('No AI models are available. Please check your API keys.');
+            }
+            // If there are models and none is selected, select the first one
+            else if (modelsData.models.length > 0 && (!selectedModel || !modelsData.models.find((m: Model) => m.id === selectedModel))) {
+              setSelectedModel(modelsData.models[0].id);
+            }
+          } else {
+            setErrorDetails('Failed to retrieve model information from the server.');
           }
-          // If there are models and none is selected, select the first one
-          else if (data.models.length > 0 && (!selectedModel || !data.models.find((m: Model) => m.id === selectedModel))) {
-            setSelectedModel(data.models[0].id);
-          }
+        } catch (modelError) {
+          console.error('Error fetching models:', modelError);
+          setErrorDetails('Failed to fetch available AI models. Please try again later.');
         }
       } catch (error) {
         console.error('Server health check failed:', error);

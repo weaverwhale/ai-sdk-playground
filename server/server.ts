@@ -29,8 +29,23 @@ app.get('/api/health', (_req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    models: getAvailableModelProviders().map(p => ({ id: p.id, name: p.name }))
   });
+});
+
+// Dedicated endpoint for available models
+app.get('/api/models', (_req, res) => {
+  try {
+    const availableModels = getAvailableModelProviders();
+    console.log('[SERVER] Available models:', availableModels.map(m => m.name).join(', '));
+    
+    res.json({ 
+      models: availableModels.map(p => ({ id: p.id, name: p.name })),
+      count: availableModels.length
+    });
+  } catch (error) {
+    console.error('[SERVER] Error getting models:', error);
+    res.status(500).json({ error: 'Failed to fetch available models' });
+  }
 });
 
 // Helper function to convert Web ReadableStream to Node.js stream
