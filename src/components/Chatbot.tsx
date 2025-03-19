@@ -239,7 +239,7 @@ export default function Chatbot() {
         <input
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="Ask me about the weather..."
+          placeholder="Ask me anything..."
           className="input-field"
           disabled={isLoading}
         />

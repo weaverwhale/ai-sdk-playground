@@ -37,9 +37,9 @@ export interface ModelProvider {
 export const modelProviders: ModelProvider[] = [
   {
     id: 'openai',
-    name: 'OpenAI (GPT-4o)',
+    name: 'OpenAI (GPT-4o Mini)',
     available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
-    getModel: () => openai('gpt-4o') as unknown as AIModel,
+    getModel: () => openai('gpt-4o-mini') as unknown as AIModel,
     defaultSystemPrompt: 'You are a helpful assistant. You can help with getting information about weather and location, and telling the current time.',
   },
   {
@@ -58,16 +58,16 @@ export const modelProviders: ModelProvider[] = [
   },
   {
     id: 'deepseek',
-    name: 'DeepSeek (DeepSeek Coder)',
+    name: 'DeepSeek (DeepSeek Chat)',
     available: checkApiKey(process.env.DEEPSEEK_API_KEY, 'DEEPSEEK'),
-    getModel: () => deepseek('deepseek-coder') as unknown as AIModel,
+    getModel: () => deepseek('deepseek-chat') as unknown as AIModel,
     defaultSystemPrompt: 'You are a helpful AI assistant powered by DeepSeek. You can help with getting information about weather and location, and telling the current time.',
   },
   {
     id: 'cerebras',
-    name: 'Cerebras (Cerebras-GPT)',
+    name: 'Llama 3.3 70B (Cerebras)',
     available: checkApiKey(process.env.CEREBRAS_API_KEY, 'CEREBRAS'),
-    getModel: () => cerebras('cerebras-gpt-1.0-13B') as unknown as AIModel,
+    getModel: () => cerebras('llama-3.3-70b') as unknown as AIModel,
     defaultSystemPrompt: 'You are a helpful AI assistant powered by Cerebras. You can help with getting information about weather and location, and telling the current time.',
   },
   {
