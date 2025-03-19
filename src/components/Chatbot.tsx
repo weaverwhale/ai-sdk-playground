@@ -2,6 +2,8 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import './Chatbot.css';
 
 interface ToolCall {
@@ -198,14 +200,23 @@ export default function Chatbot() {
         {messages.map((message, index) => (
           <div key={index} className={`message ${message.role}`}>
             <div className="message-content">
-              {message.content}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
             </div>
             {(message as ChatMessage).toolCalls?.map((toolCall, idx) => (
               <div key={idx} className="tool-invocation">
                 <div className="tool-name">Tool: {toolCall.name}</div>
                 <div className="tool-args">Arguments: {JSON.stringify(toolCall.args)}</div>
                 {toolCall.output && (
-                  <div className="tool-response">Response: {toolCall.output}</div>
+                  <div className="tool-response">
+                    <div className="tool-response-label">Response:</div>
+                    <div className="tool-response-content">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {toolCall.output}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
                 )}
               </div>
             ))}
