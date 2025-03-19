@@ -18,13 +18,11 @@ app.use(cors({
 
 app.use(express.json());
 
-// Request logging middleware
 app.use((req, res, next) => {
   console.log(`[SERVER] ${new Date().toISOString()} ${req.method} ${req.url}`);
   next();
 });
 
-// Simple health check endpoint
 app.get('/api/health', (_req, res) => {
   res.json({ 
     status: 'ok', 
@@ -32,7 +30,6 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// Dedicated endpoint for available models
 app.get('/api/models', (_req, res) => {
   try {
     const availableModels = getAvailableModelProviders();
@@ -48,7 +45,6 @@ app.get('/api/models', (_req, res) => {
   }
 });
 
-// Helper function to convert Web ReadableStream to Node.js stream
 function webToNodeStream(webStream: ReadableStream): Readable {
   const nodeStream = new Readable({ read: () => {} });
   const reader = webStream.getReader();

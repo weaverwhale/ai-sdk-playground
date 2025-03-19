@@ -177,7 +177,6 @@ export default function Chatbot() {
     <div className="chatbot-container">
       {serverInfo && <div className="server-status">{serverInfo}</div>}
       
-      {/* Model selector */}
       <div className="model-selector">
         <label htmlFor="model-select">AI Model:</label>
         <select
@@ -201,7 +200,6 @@ export default function Chatbot() {
             <div className="message-content">
               {message.content}
             </div>
-            {/* Display tool calls when they exist */}
             {(message as ChatMessage).toolCalls?.map((toolCall, idx) => (
               <div key={idx} className="tool-invocation">
                 <div className="tool-name">Tool: {toolCall.name}</div>

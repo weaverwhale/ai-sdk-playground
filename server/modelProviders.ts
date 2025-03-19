@@ -4,19 +4,16 @@ import { groq } from '@ai-sdk/groq';
 import { deepseek } from '@ai-sdk/deepseek';
 import { cerebras } from '@ai-sdk/cerebras';
 import { google } from '@ai-sdk/google';
-import type { Message } from 'ai';
+import type { LanguageModelV1 } from 'ai';
 
-// Interface for AI model with generateText method
-export interface AIModel {
-  generateText(params: {
-    messages: Message[];
-    maxTokens?: number;
-  }): Promise<{
-    textStream: ReadableStream;
-  }>;
+export interface ModelProvider {
+  id: string;
+  name: string;
+  available: boolean;
+  model: LanguageModelV1;
+  defaultSystemPrompt: string;
 }
 
-// Check and log missing API keys
 const checkApiKey = (key: string | undefined, provider: string): boolean => {
   const exists = !!key;
   if (!exists) {
@@ -25,69 +22,55 @@ const checkApiKey = (key: string | undefined, provider: string): boolean => {
   return exists;
 };
 
-// Define available models with their configurations
-export interface ModelProvider {
-  id: string;
-  name: string;
-  available: boolean;
-  getModel: () => AIModel;
-  defaultSystemPrompt: string;
-}
-
 export const modelProviders: ModelProvider[] = [
   {
     id: 'openai',
     name: 'OpenAI (GPT-4o Mini)',
     available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
-    getModel: () => openai('gpt-4o-mini') as unknown as AIModel,
+    model: openai('gpt-4o-mini'),
     defaultSystemPrompt: 'You are a helpful assistant. You can help with getting information about weather and location, and telling the current time.',
   },
   {
     id: 'anthropic',
     name: 'Anthropic (Claude 3 Opus)',
     available: checkApiKey(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC'),
-    getModel: () => anthropic('claude-3-opus-20240229') as unknown as AIModel,
+    model: anthropic('claude-3-opus-20240229'),
     defaultSystemPrompt: 'You are Claude, a helpful AI assistant by Anthropic. You can help with getting information about weather and location, and telling the current time.',
   },
   {
     id: 'groq',
     name: 'Groq (Llama 3)',
     available: checkApiKey(process.env.GROQ_API_KEY, 'GROQ'),
-    getModel: () => groq('llama3-8b-8192') as unknown as AIModel,
+    model: groq('llama3-8b-8192'),
     defaultSystemPrompt: 'You are a helpful AI assistant running on Groq. You can help with getting information about weather and location, and telling the current time.',
   },
   {
     id: 'deepseek',
     name: 'DeepSeek (DeepSeek Chat)',
     available: checkApiKey(process.env.DEEPSEEK_API_KEY, 'DEEPSEEK'),
-    getModel: () => deepseek('deepseek-chat') as unknown as AIModel,
+    model: deepseek('deepseek-chat'),
     defaultSystemPrompt: 'You are a helpful AI assistant powered by DeepSeek. You can help with getting information about weather and location, and telling the current time.',
   },
   {
     id: 'cerebras',
     name: 'Llama 3.3 70B (Cerebras)',
     available: checkApiKey(process.env.CEREBRAS_API_KEY, 'CEREBRAS'),
-    getModel: () => cerebras('llama-3.3-70b') as unknown as AIModel,
+    model: cerebras('llama-3.3-70b'),
     defaultSystemPrompt: 'You are a helpful AI assistant powered by Cerebras. You can help with getting information about weather and location, and telling the current time.',
   },
   {
     id: 'gemini',
     name: 'Google (Gemini 2.0 Flash)',
     available: checkApiKey(process.env.GEMINI_API_KEY, 'GEMINI'),
-    getModel: () => google('models/gemini-2.0-flash-exp') as unknown as AIModel,
+    model: google('models/gemini-2.0-flash-exp'),
     defaultSystemPrompt: 'You are a helpful AI assistant powered by Google Gemini. You can help with getting information about weather and location, and telling the current time.',
   },
 ];
 
-// Helper function to get a model provider by ID
 export function getModelProviderById(id: string): ModelProvider | undefined {
   return modelProviders.find(provider => provider.id === id);
 }
 
-// Get available model providers
 export function getAvailableModelProviders(): ModelProvider[] {
   return modelProviders.filter(provider => provider.available);
 }
-
-// Log available models at startup
-console.log('[API] Available models:', getAvailableModelProviders().map(p => p.name).join(', ')); 
