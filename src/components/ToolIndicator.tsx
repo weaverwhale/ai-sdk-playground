@@ -6,7 +6,7 @@ interface ToolIndicatorProps {
   description?: string;
 }
 
-export const ToolIndicator: React.FC<ToolIndicatorProps> = ({ 
+const ToolIndicator: React.FC<ToolIndicatorProps> = ({ 
   toolName, 
   isActive,
   description 
@@ -15,16 +15,12 @@ export const ToolIndicator: React.FC<ToolIndicatorProps> = ({
   
   return (
     <div className="tool-indicator">
-      <div className="tool-indicator-icon">
-        <div className="tool-indicator-spinner"></div>
-      </div>
+      <div className="tool-indicator-spinner"></div>
       <div className="tool-indicator-content">
         <div className="tool-indicator-name">
-          <span className="tool-indicator-label">Using tool:</span> {toolName}
+          {toolName === "AI Tool" ? "Processing request..." : `Using ${toolName}`}
         </div>
-        {description && (
-          <div className="tool-indicator-description">{description}</div>
-        )}
+        {description && <div className="tool-indicator-description">{description}</div>}
       </div>
     </div>
   );

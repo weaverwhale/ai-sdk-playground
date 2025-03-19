@@ -59,36 +59,14 @@ export default function Chatbot() {
     onToolCall: (event) => {
       isProcessingTool.current = true;
       
-      try {
-        let toolName = "Unknown Tool";
-        
-        if (event.toolCall && typeof event.toolCall === 'object') {
-          if ('name' in event.toolCall) {
-            toolName = (event.toolCall as {name: string}).name;
-          }
-          else if ('args' in event.toolCall && event.toolCall.args) {
-            if ('function' in (event.toolCall.args as Record<string, unknown>)) {
-              toolName = (event.toolCall.args as {function: string}).function;
-            }
-            else if (typeof event.toolCall.args === 'object') {
-              const keys = Object.keys(event.toolCall.args as object);
-              if (keys.length > 0) {
-                toolName = keys[0];
-              }
-            }
-          }
-        }
-        
-        setActiveToolCall({
-          name: toolName,
-          description: toolDescriptions[toolName] || "Using tool to retrieve information"
-        });
-      } catch {
-        setActiveToolCall({
-          name: "Using AI Tools",
-          description: "Processing your request with specialized tools"
-        });
-      }
+      // Get the tool name directly from the event
+      const toolName = event.toolCall?.toolName || "AI Tool";
+      
+      // Set the active tool with its description if available
+      setActiveToolCall({
+        name: toolName,
+        description: toolDescriptions[toolName] || "Using tool to retrieve information"
+      });
     }
   });
 
@@ -299,12 +277,17 @@ export default function Chatbot() {
                     >
                       <div className="tool-name">
                         <span className="tool-icon">🔧</span>
-                        Tool: {toolCall.name}
+                        {toolDescriptions[toolCall.name] ? 
+                          <>Tool: <span className="tool-name-text">{toolCall.name}</span></> : 
+                          "AI Tool"
+                        }
                         <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
                       </div>
-                      <div className="tool-description">
-                        {toolDescriptions[toolCall.name] || ''}
-                      </div>
+                      {toolDescriptions[toolCall.name] && (
+                        <div className="tool-description">
+                          {toolDescriptions[toolCall.name]}
+                        </div>
+                      )}
                     </div>
                     
                     {isExpanded && (

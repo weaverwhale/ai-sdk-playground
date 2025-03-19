@@ -88,6 +88,11 @@
   gap: 0.5rem;
 }
 
+.tool-name-text {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
 .tool-icon {
   font-size: 1rem;
   margin-right: 0.25rem;
@@ -530,10 +535,6 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
-.tool-indicator-icon {
-  margin-right: 0.75rem;
-}
-
 .tool-indicator-spinner {
   width: 20px;
   height: 20px;
@@ -541,6 +542,7 @@
   border-left-color: #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  margin-right: 0.75rem;
 }
 
 .tool-indicator-content {
@@ -550,16 +552,11 @@
 .tool-indicator-name {
   font-weight: 600;
   color: #1e40af;
-  margin-bottom: 0.25rem;
-}
-
-.tool-indicator-label {
-  color: #6b7280;
-  font-weight: normal;
+  font-size: 0.95rem;
 }
 
 .tool-indicator-description {
   font-size: 0.85rem;
-  color: #64748b;
-  font-style: italic;
+  color: #6b7280;
+  margin-top: 0.25rem;
 } 
