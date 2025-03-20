@@ -9,7 +9,8 @@ type ForecastParams = {
 };
 
 const forecast = {
-  name: 'forecast',
+  id: 'forecast',
+  name: 'Forecast',
   description: 'Useful for forecasting future values based on time series analysis',
   parameters: z.object({
     data: z

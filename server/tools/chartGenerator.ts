@@ -10,7 +10,8 @@ type ChartGeneratorParams = {
 };
 
 const chartGenerator = {
-  name: 'chartGenerator',
+  id: 'chartGenerator',
+  name: 'Chart Generator',
   description: 'Useful for generating Mermaid charts from data',
   parameters: z.object({
     type: z

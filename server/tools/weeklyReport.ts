@@ -760,7 +760,8 @@ async function generateWeeklyReport(
 }
 
 const weeklyReport = {
-  name: 'weeklyReport',
+  id: 'weeklyReport',
+  name: 'Weekly Report',
   description: 'Generates a weekly report of GitHub activity for a specific user including PRs and commits',
   parameters: z.object({
     username: z

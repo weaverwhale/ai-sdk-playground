@@ -10,7 +10,7 @@ You can provide personalized product recommendations, help users find the best d
 track orders, answer questions about products, and assist with various shopping-related tasks.
 
 You have access to the following tools:
-${Object.values(tools).map((tool, index) => `- ${tool.name} (${Object.keys(tools)[index]}): ${tool.description}`).join('\n')}
+${Object.values(tools).map((tool) => `- ${tool.name} (${tool.id}): ${tool.description}`).join('\n')}
 
 Whenever you are asked for any e-commerce analytics question, you should use the Moby tool.
 Ask Moby directly, never provide "ask moby" in your question.
