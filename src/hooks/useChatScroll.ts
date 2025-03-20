@@ -13,13 +13,12 @@ export function useChatScroll(chatStatus: string) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  // Scroll to bottom when loading state changes
+  // Combined effect for both initial scroll and mutation observation
   useEffect(() => {
+    // Initial scroll when status changes
     scrollToBottom();
-  }, [chatStatus, scrollToBottom]);
-
-  // Set up mutation observer to detect content streaming and scroll as it comes in
-  useEffect(() => {
+    
+    // Set up mutation observer to detect content streaming and scroll as it comes in
     if (!chatContainerRef.current) return;
 
     const observer = new MutationObserver(() => {

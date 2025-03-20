@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Model } from '../types/chatTypes';
 
 interface UseModelsResult {
@@ -12,10 +12,13 @@ interface UseModelsResult {
 export function useModels(): UseModelsResult {
   const [availableModels, setAvailableModels] = useState<Model[]>([]);
   const [modelError, setModelError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>(() => {
-    const storedModel = typeof window !== 'undefined' ? localStorage.getItem('selectedModel') : null;
-    return storedModel || 'openai';
-  });
+  
+  // Use useMemo for initial model selection from localStorage
+  const initialModel = useMemo(() => {
+    return typeof window !== 'undefined' ? localStorage.getItem('selectedModel') || 'openai' : 'openai';
+  }, []);
+  
+  const [selectedModel, setSelectedModel] = useState<string>(initialModel);
 
   // Update localStorage when selected model changes
   useEffect(() => {
@@ -47,7 +50,7 @@ export function useModels(): UseModelsResult {
     } catch {
       setModelError('Failed to fetch available AI models. Please try again later.');
     }
-  }, [selectedModel]);
+  }, []); // Removed selectedModel dependency
 
   return {
     availableModels,

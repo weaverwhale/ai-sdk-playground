@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import mermaid from 'mermaid';
 
 // Initialize mermaid with configuration
@@ -15,8 +15,14 @@ interface MermaidDiagramProps {
 
 const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ chart }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const prevChartRef = useRef<string>('');
   
   useEffect(() => {
+    // Skip if chart hasn't changed
+    if (chart === prevChartRef.current) return;
+    
+    prevChartRef.current = chart;
+    
     if (containerRef.current) {
       // Clear previous diagram
       containerRef.current.innerHTML = '';
@@ -55,4 +61,5 @@ const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ chart }) => {
   );
 };
 
-export default MermaidDiagram; 
+// Memoize the component to prevent unnecessary re-renders
+export default memo(MermaidDiagram); 
