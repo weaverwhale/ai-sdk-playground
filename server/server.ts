@@ -3,8 +3,8 @@ import 'dotenv/config';
 
 import express from 'express';
 import cors from 'cors';
-import { handleChatRequest } from '../server/api/chatApi';
-import { handleToolsRequest } from '../server/api/toolsApi';
+import { handleChatRequest } from '../server/api/chat';
+import { handleToolsRequest } from '../server/api/tools';
 import { Readable } from 'stream';
 import { getAvailableModelProviders } from './modelProviders';
 
