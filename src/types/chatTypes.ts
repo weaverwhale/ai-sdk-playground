@@ -71,7 +71,7 @@ export interface ServerMonitoringResult {
   availableModels: Model[];
   selectedModel: string;
   setSelectedModel: (model: string) => void;
-  retryConnection: () => void;
+  retryConnection: () => Promise<void>;
 }
 
 // Action types for our chat state reducer

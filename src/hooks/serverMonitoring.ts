@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Model, ServerMonitoringResult } from '../types/chatTypes';
+import { ServerMonitoringResult } from '../types/chatTypes';
+import { useModels } from './useModels';
 
 export function useServerMonitoring(): ServerMonitoringResult {
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [serverInfo, setServerInfo] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
-  const [availableModels, setAvailableModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>(() => {
-    const storedModel = typeof window !== 'undefined' ? localStorage.getItem('selectedModel') : null;
-    return storedModel || 'openai';
-  });
+  const { availableModels, selectedModel, setSelectedModel, fetchModels, modelError } = useModels();
+
+  // Update error details with model error if present
+  useEffect(() => {
+    if (modelError) {
+      setErrorDetails(modelError);
+    }
+  }, [modelError]);
 
   const checkServerHealth = async () => {
     try {
@@ -18,29 +22,10 @@ export function useServerMonitoring(): ServerMonitoringResult {
       
       setServerStatus('online');
       setServerInfo(`Server is online (as of ${new Date().toLocaleTimeString()})`);
-      
-      try {
-        const modelsResponse = await fetch('/api/models');
-        const modelsData = await modelsResponse.json();
-        
-        if (modelsData && Array.isArray(modelsData.models)) {
-          setAvailableModels(modelsData.models);
-          
-          if (modelsData.models.length === 0) {
-            setErrorDetails('No AI models are available. Please check your API keys.');
-          }
-          else if (modelsData.models.length > 0 && (!selectedModel || !modelsData.models.find((m: Model) => m.id === selectedModel))) {
-            setSelectedModel(modelsData.models[0].id);
-          }
-        } else {
-          setErrorDetails('Failed to retrieve model information from the server.');
-        }
-      } catch {
-        setErrorDetails('Failed to fetch available AI models. Please try again later.');
-      }
     } catch {
       setServerStatus('offline');
       setServerInfo('Could not connect to the server. Please check if the server is running.');
+      setErrorDetails('Server connection failed.');
     }
   };
 
@@ -53,6 +38,10 @@ export function useServerMonitoring(): ServerMonitoringResult {
     const doServerCheck = async () => {
       try {
         await checkServerHealth();
+        // Only fetch models once when server is confirmed online
+        if (serverStatus !== 'online') {
+          await fetchModels();
+        }
       } catch {
         if (retryCount < maxRetries) {
           retryCount++;
@@ -60,6 +49,7 @@ export function useServerMonitoring(): ServerMonitoringResult {
         } else {
           setServerStatus('offline');
           setServerInfo('Could not connect to the server after multiple attempts. Please check if the server is running.');
+          setErrorDetails('Server connection failed after multiple attempts.');
         }
       }
     };
@@ -67,18 +57,20 @@ export function useServerMonitoring(): ServerMonitoringResult {
     doServerCheck();
     
     const intervalId = setInterval(() => {
-      checkServerHealth();
+      checkServerHealth(); // Only check health status in interval, not models
     }, 30000);
     
     return () => clearInterval(intervalId);
-  }, []);
+  }, [serverStatus, fetchModels]);
 
-  // Update localStorage when selected model changes
-  useEffect(() => {
-    if (typeof window !== 'undefined' && selectedModel) {
-      localStorage.setItem('selectedModel', selectedModel);
+  const retryConnection = async () => {
+    setServerStatus('checking');
+    setErrorDetails(null);
+    await checkServerHealth();
+    if (serverStatus === 'online') {
+      await fetchModels();
     }
-  }, [selectedModel]);
+  };
 
   return {
     serverStatus,
@@ -87,6 +79,6 @@ export function useServerMonitoring(): ServerMonitoringResult {
     availableModels,
     selectedModel,
     setSelectedModel,
-    retryConnection: () => setServerStatus('checking')
+    retryConnection
   };
 }
