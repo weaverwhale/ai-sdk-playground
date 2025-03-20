@@ -1,3 +1,4 @@
+import React, { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -5,6 +6,11 @@ import MermaidDiagram from './MermaidDiagram';
 import type { Components } from 'react-markdown';
 import { useChatbotMessages } from './hooks/chatbotMessages';
 import { useServerMonitoring } from './hooks/serverMonitoring';
+import {
+  MessageProps,
+  ToolCallsDisplayProps,
+  ChatMessagesProps
+} from './types/chatTypes';
 
 import './Chatbot.css';
 
@@ -27,7 +33,193 @@ const CodeBlock: Components['code'] = (props) => {
   );
 };
 
-export default function Chatbot() {
+// Extracted Message component to improve readability
+const Message = memo(({ 
+  message, 
+  expandedTools, 
+  toolOptions, 
+  toggleToolExpansion, 
+  messageIndex 
+}: MessageProps) => {
+  const toolCalls = message.toolCalls || [];
+  const isToolInProgress = message.isToolInProgress;
+  
+  // Skip empty assistant messages
+  if (message.role === 'assistant' && !message.content.trim() && toolCalls.length === 0) {
+    return null;
+  }
+  
+  return (
+    <div className={`message ${message.role}`}>
+      {/* Display tool calls before the message content */}
+      {toolCalls.length > 0 && (
+        <ToolCallsDisplay 
+          toolCalls={toolCalls} 
+          expandedTools={expandedTools} 
+          toolOptions={toolOptions} 
+          toggleToolExpansion={toggleToolExpansion} 
+          messageIndex={messageIndex} 
+        />
+      )}
+      
+      {/* Display message content after tool calls */}
+      {message.content.trim() && (
+        <div className="message-content">
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+            components={{
+              code: CodeBlock,
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
+        </div>
+      )}
+      
+      {/* Show tool in progress indicator only if no individual tool cards are visible */}
+      {isToolInProgress && toolCalls.length === 0 && (
+        <div className="tool-in-progress">
+          <div className="tool-spinner"></div>
+          <span>Tool execution in progress...</span>
+        </div>
+      )}
+    </div>
+  );
+});
+
+Message.displayName = 'Message';
+
+// Extracted ToolCalls component
+const ToolCallsDisplay = memo(({ 
+  toolCalls, 
+  expandedTools, 
+  toolOptions, 
+  toggleToolExpansion, 
+  messageIndex 
+}: ToolCallsDisplayProps) => {
+  return (
+    <div className="tool-calls-container">
+      {toolCalls.map((toolCall, idx) => {
+        const isExpanded = expandedTools[`${messageIndex}-${idx}`] === true;
+        const toolInfo = toolOptions[toolCall.name];
+        const displayName = toolCall.displayName || toolInfo?.name || toolCall.name || "AI Tool";
+        const description = toolCall.description || toolInfo?.description || "Using tool to retrieve information";
+        const status = toolCall.status || 'completed';
+        
+        return (
+          <div key={idx} className={`tool-invocation tool-status-${status}`}>
+            <div 
+              className="tool-header"
+              onClick={() => toggleToolExpansion(messageIndex, idx)}
+            >
+              <div className="tool-name">
+                <span className="tool-icon">
+                  {status === 'running' ? '⏳' : status === 'completed' ? '✅' : '❌'}
+                </span>
+                <>Calling<span className="tool-name-text">{displayName}</span></>
+                <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
+              </div>
+              <div className="tool-description">
+                {description}
+              </div>
+              {status === 'running' && (
+                <div className="tool-status-indicator">
+                  <div className="tool-spinner"></div>
+                  <span>Running...</span>
+                </div>
+              )}
+              {status === 'error' && (
+                <div className="tool-status-indicator tool-error">
+                  <span>Error occurred</span>
+                </div>
+              )}
+            </div>
+            
+            {isExpanded && (
+              <>
+                <div className="tool-args">
+                  <div className="tool-section-label">Arguments:</div>
+                  <pre>{JSON.stringify(toolCall.args, null, 2)}</pre>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+
+ToolCallsDisplay.displayName = 'ToolCallsDisplay';
+
+// Extracted ChatMessages component
+const ChatMessages = memo(({
+  chatMessages,
+  status,
+  error,
+  errorDetails,
+  expandedTools,
+  toolOptions,
+  toggleToolExpansion,
+  onFinalResponse,
+  messagesEndRef,
+  chatContainerRef,
+  handleRetry
+}: ChatMessagesProps) => {
+  return (
+    <div className="chat-messages" ref={chatContainerRef}>
+      {chatMessages.map((message, index) => (
+        <Message
+          key={index}
+          message={message}
+          expandedTools={expandedTools}
+          toolOptions={toolOptions}
+          toggleToolExpansion={toggleToolExpansion}
+          messageIndex={index}
+        />
+      ))}
+      
+      {/* Only show thinking animation if we don't already have a streaming response */}
+      {(status === 'submitted') && !onFinalResponse && (
+        <div className="message assistant">
+          <div className="message-content">
+            <div className="thinking-animation">
+              <span className="thinking-text">Thinking</span>
+              <div className="thinking-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {error && (
+        <div className="message error">
+          <div className="message-content">
+            <p>Error: {error.message}</p>
+            {errorDetails && errorDetails !== error.message && (
+              <p className="error-details">Details: {errorDetails}</p>
+            )}
+            <button 
+              onClick={handleRetry}
+              className="retry-button"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+      <div ref={messagesEndRef} />
+    </div>
+  );
+});
+
+ChatMessages.displayName = 'ChatMessages';
+
+const Chatbot: React.FC = () => {
   // Use server monitoring hook
   const {
     serverStatus,
@@ -119,131 +311,19 @@ export default function Chatbot() {
         </button>
       </div>
       
-      <div className="chat-messages" ref={chatContainerRef}>
-        {chatMessages.map((message, index) => {
-          const toolCalls = message.toolCalls || [];
-          const isToolInProgress = message.isToolInProgress;
-          
-          // Skip empty assistant messages
-          if (message.role === 'assistant' && !message.content.trim() && toolCalls.length === 0) {
-            return null;
-          }
-          
-          return (
-            <div key={index} className={`message ${message.role}`}>
-              {/* Display tool calls before the message content */}
-              {toolCalls.length > 0 && (
-                <div className="tool-calls-container">
-                  {toolCalls.map((toolCall, idx) => {
-                    const isExpanded = expandedTools[`${index}-${idx}`] === true;
-                    const toolInfo = toolOptions[toolCall.name];
-                    const displayName = toolCall.displayName || toolInfo?.name || toolCall.name || "AI Tool";
-                    const description = toolCall.description || toolInfo?.description || "Using tool to retrieve information";
-                    const status = toolCall.status || 'completed';
-                    
-                    return (
-                      <div key={idx} className={`tool-invocation tool-status-${status}`}>
-                        <div 
-                          className="tool-header"
-                          onClick={() => toggleToolExpansion(index, idx)}
-                        >
-                          <div className="tool-name">
-                            <span className="tool-icon">
-                              {status === 'running' ? '⏳' : status === 'completed' ? '✅' : '❌'}
-                            </span>
-                            <>Calling<span className="tool-name-text">{displayName}</span></>
-                            <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
-                          </div>
-                          <div className="tool-description">
-                            {description}
-                          </div>
-                          {status === 'running' && (
-                            <div className="tool-status-indicator">
-                              <div className="tool-spinner"></div>
-                              <span>Running...</span>
-                            </div>
-                          )}
-                          {status === 'error' && (
-                            <div className="tool-status-indicator tool-error">
-                              <span>Error occurred</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        {isExpanded && (
-                          <>
-                            <div className="tool-args">
-                              <div className="tool-section-label">Arguments:</div>
-                              <pre>{JSON.stringify(toolCall.args, null, 2)}</pre>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              
-              {/* Display message content after tool calls */}
-              {message.content.trim() && (
-                <div className="message-content">
-                  <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeRaw]}
-                    components={{
-                      code: CodeBlock,
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
-                </div>
-              )}
-              
-              {/* Show tool in progress indicator only if no individual tool cards are visible */}
-              {isToolInProgress && toolCalls.length === 0 && (
-                <div className="tool-in-progress">
-                  <div className="tool-spinner"></div>
-                  <span>Tool execution in progress...</span>
-                </div>
-              )}
-            </div>
-          );
-        })}
-        
-        {/* Only show thinking animation if we don't already have a streaming response */}
-        {(status === 'submitted') && !onFinalResponse && (
-          <div className="message assistant">
-            <div className="message-content">
-              <div className="thinking-animation">
-                <span className="thinking-text">Thinking</span>
-                <div className="thinking-dots">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {error && (
-          <div className="message error">
-            <div className="message-content">
-              <p>Error: {error.message}</p>
-              {chatErrorDetails && chatErrorDetails !== error.message && (
-                <p className="error-details">Details: {chatErrorDetails}</p>
-              )}
-              <button 
-                onClick={handleRetry}
-                className="retry-button"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+      <ChatMessages
+        chatMessages={chatMessages}
+        status={status}
+        error={error}
+        errorDetails={chatErrorDetails}
+        expandedTools={expandedTools}
+        toolOptions={toolOptions}
+        toggleToolExpansion={toggleToolExpansion}
+        onFinalResponse={onFinalResponse}
+        messagesEndRef={messagesEndRef}
+        chatContainerRef={chatContainerRef}
+        handleRetry={handleRetry}
+      />
       
       <form className="chat-input" onSubmit={handleSubmit}>
         <input
@@ -264,3 +344,5 @@ export default function Chatbot() {
     </div>
   );
 }
+
+export default Chatbot;

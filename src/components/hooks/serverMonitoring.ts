@@ -1,19 +1,5 @@
 import { useState, useEffect } from 'react';
-
-interface Model {
-  id: string;
-  name: string;
-}
-
-interface ServerMonitoringResult {
-  serverStatus: 'checking' | 'online' | 'offline';
-  serverInfo: string | null;
-  errorDetails: string | null;
-  availableModels: Model[];
-  selectedModel: string;
-  setSelectedModel: (model: string) => void;
-  retryConnection: () => void;
-}
+import { Model, ServerMonitoringResult } from '../types/chatTypes';
 
 export function useServerMonitoring(): ServerMonitoringResult {
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
