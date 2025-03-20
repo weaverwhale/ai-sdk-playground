@@ -53,7 +53,10 @@ export default function Chatbot() {
   const [serverInfo, setServerInfo] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [availableModels, setAvailableModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('openai');
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    const storedModel = typeof window !== 'undefined' ? localStorage.getItem('selectedModel') : null;
+    return storedModel || 'openai';
+  });
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
   const [toolDescriptions, setToolDescriptions] = useState<Record<string, string>>({});
   const [activeToolCall, setActiveToolCall] = useState<{name: string, description?: string} | null>(null);
@@ -301,6 +304,13 @@ export default function Chatbot() {
       [key]: !prev[key]
     }));
   };
+
+  // Update localStorage when selected model changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && selectedModel) {
+      localStorage.setItem('selectedModel', selectedModel);
+    }
+  }, [selectedModel]);
 
   if (serverStatus === 'checking') {
     return (

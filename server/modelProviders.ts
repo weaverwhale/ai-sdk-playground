@@ -69,7 +69,7 @@ export const modelProviders: ModelProvider[] = [
     id: 'gemini',
     name: 'Google (Gemini 2.0 Flash)',
     available: checkApiKey(process.env.GOOGLE_GENERATIVE_AI_API_KEY, 'GEMINI'),
-    model: google('gemini-2.0-flash-001'),
+    model: google('gemini-2.0-flash'),
     defaultSystemPrompt
   },
   // {
