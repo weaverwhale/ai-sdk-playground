@@ -2,17 +2,17 @@ import React, { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import MermaidDiagram from './MermaidDiagram';
+import MermaidDiagram from '../MermaidDiagram';
 import type { Components } from 'react-markdown';
-import { useChatbotMessages } from './hooks/chatbotMessages';
-import { useServerMonitoring } from './hooks/serverMonitoring';
+import { useChatbotMessages } from '../../hooks/chatbotMessages';
+import { useServerMonitoring } from '../../hooks/serverMonitoring';
 import {
   MessageProps,
   ToolCallsDisplayProps,
   ChatMessagesProps
-} from './types/chatTypes';
+} from '../../types/chatTypes';
 
-import './Chatbot.css';
+import './index.css';
 
 // Create a more permissive code component for ReactMarkdown
 const CodeBlock: Components['code'] = (props) => {
