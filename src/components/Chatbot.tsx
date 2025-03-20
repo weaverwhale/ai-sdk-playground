@@ -94,7 +94,7 @@ export default function Chatbot() {
     msg.conversationTurn === currentConversationTurn.current
   ), [chatMessages]);
   
-  const { messages, input, setInput, handleSubmit, isLoading, error, reload } = useChat({
+  const { messages, input, setInput, handleSubmit, status, error, reload } = useChat({
     api: '/api/chat',
     maxSteps: 5,
     body: { modelId: selectedModel },
@@ -236,12 +236,12 @@ export default function Chatbot() {
       });
       
       // Only mark as added when loading is complete
-      if (!isLoading) {
+      if (status === 'ready') {
         hasAddedFinalResponseRef.current = true;
         toolCallResponseRef.current = "";
       }
     }
-  }, [messages, isLoading]);
+  }, [messages, status]);
 
   // Handle regular assistant messages (non-tool responses)
   useEffect(() => {
@@ -427,7 +427,7 @@ export default function Chatbot() {
   // Also scroll to bottom when loading state changes
   useEffect(() => {
     scrollToBottom();
-  }, [isLoading]);
+  }, [status]);
 
   // Set up mutation observer to detect content streaming and scroll as it comes in
   useEffect(() => {
@@ -439,7 +439,7 @@ export default function Chatbot() {
       const container = chatContainerRef.current!;
       const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
       
-      if (isNearBottom || isLoading) {
+      if (isNearBottom || status === 'submitted' || status === 'streaming') {
         scrollToBottom();
       }
     });
@@ -454,14 +454,14 @@ export default function Chatbot() {
     return () => {
       observer.disconnect();
     };
-  }, [isLoading]);
+  }, [status]);
 
   // Reset state after loading is complete
   useEffect(() => {
-    if (!isLoading && isProcessingTool.current) {
+    if (status === 'ready' && isProcessingTool.current) {
       isProcessingTool.current = false;
     }
-  }, [isLoading]);
+  }, [status]);
 
   useEffect(() => {
     let retryCount = 0;
@@ -601,7 +601,7 @@ export default function Chatbot() {
   };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
-    if(isLoading) {
+    if(status === 'submitted' || status === 'streaming') {
       return;
     }
     
@@ -677,7 +677,7 @@ export default function Chatbot() {
           id="model-select"
           value={selectedModel}
           onChange={handleModelChange}
-          disabled={isLoading || availableModels.length === 0}
+          disabled={(status === 'submitted' || status === 'streaming') || availableModels.length === 0}
         >
           {availableModels.length === 0 && <option value="">No models available</option>}
           {availableModels.map(model => (
@@ -780,7 +780,7 @@ export default function Chatbot() {
         })}
         
         {/* Only show thinking animation if we don't already have a streaming response */}
-        {isLoading && !onFinalResponse && (
+        {(status === 'submitted') && !onFinalResponse && (
           <div className="message assistant">
             <div className="message-content">
               <div className="thinking-animation">
@@ -825,7 +825,7 @@ export default function Chatbot() {
         <button 
           className="send-button"
           type="submit"
-          disabled={isLoading}
+          disabled={status === 'submitted' || status === 'streaming'}
         >
           Send
         </button>
