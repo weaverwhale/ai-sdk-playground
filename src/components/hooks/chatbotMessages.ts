@@ -53,9 +53,10 @@ export interface UseChatbotMessagesResult {
   handleKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   toggleToolExpansion: (messageIdx: number, toolIdx: number) => void;
   onFinalResponse: boolean;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
-  chatContainerRef: React.RefObject<HTMLDivElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  chatContainerRef: React.RefObject<HTMLDivElement | null>;
   reload: () => void;
+  clearConversation: () => void;
 }
 
 export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): UseChatbotMessagesResult {
@@ -64,6 +65,9 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
+  
+  // Add a conversation ID to track and reset entire conversations
+  const [conversationId, setConversationId] = useState<string>(Date.now().toString());
   
   const isProcessingTool = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -81,13 +85,29 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
   
   // Track if we're in a model change reload cycle
   const isReloadingRef = useRef(false);
-
+  
   const onFinalResponse = useMemo(() => chatMessages.some(msg => 
     msg.role === 'assistant' && 
     msg.isFinalResponse === true && 
     msg.conversationTurn === currentConversationTurn.current
   ), [chatMessages]);
   
+  // Helper function to reset internal state
+  const resetInternalState = () => {
+    // Reset all refs to initial values
+    hasAddedFinalResponseRef.current = false;
+    toolCallResponseRef.current = "";
+    toolExecutionMsgMap.current.clear();
+    currentConversationTurn.current = 0;
+    previousMessagesLengthRef.current = 0;
+    previousChatMessagesLengthRef.current = 0;
+    isProcessingTool.current = false;
+    lastToolCallRef.current = null;
+  };
+  
+  // Create a new instance of the useChat hook for each conversation
+  // By using conversationId in the dependency array, we force a complete 
+  // recreation of the hook state when clearing the conversation
   const { 
     messages, 
     input, 
@@ -99,6 +119,7 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
   } = useChat({
     api: '/api/chat',
     maxSteps: 5,
+    id: conversationId, // Use conversationId to isolate conversation states
     body: { modelId: selectedModel },
     onError: (error) => {
       let errorMessage = 'Unknown error occurred';
@@ -375,92 +396,6 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     Promise.all(processingPromises).catch(console.error);
   }, [messages, chatMessages]);
 
-  // Handle tool call outputs
-  useEffect(() => {
-    // Skip if changes are due to model change
-    if (isReloadingRef.current) return;
-    
-    const handleToolCallOutput = (content: string) => {
-      // Save the tool call output for later use
-      toolCallResponseRef.current = content;
-      
-      // If we have a tool call in progress, update it with the output
-      if (lastToolCallRef.current) {
-        const toolCallId = lastToolCallRef.current.id;
-        lastToolCallRef.current.output = "Tool response received.";
-        lastToolCallRef.current.status = 'completed';
-        
-        // Update the chat message that contains this tool call
-        setChatMessages(prevMessages => {
-          // Find the message index from our map
-          const msgIndex = toolCallId ? toolExecutionMsgMap.current.get(toolCallId) : undefined;
-          
-          if (msgIndex !== undefined && typeof msgIndex === 'number' && msgIndex < prevMessages.length) {
-            const updatedMessages = [...prevMessages];
-            const messageToUpdate = updatedMessages[msgIndex];
-            
-            if (messageToUpdate.toolCalls?.length) {
-              const updatedToolCalls = messageToUpdate.toolCalls.map((tc: ToolCall) => {
-                if (tc.name === lastToolCallRef.current?.name && 
-                    JSON.stringify(tc.args) === JSON.stringify(lastToolCallRef.current?.args)) {
-                  return { ...tc, output: "Tool response received.", status: 'completed' as const };
-                }
-                return tc;
-              });
-              
-              updatedMessages[msgIndex] = {
-                ...messageToUpdate,
-                toolCalls: updatedToolCalls,
-                isToolInProgress: false,
-                content: ''
-              };
-            }
-            
-            return updatedMessages;
-          }
-          
-          return prevMessages;
-        });
-        
-        // Reset the tool call reference
-        lastToolCallRef.current = null;
-        
-        // Immediately try to add a final response placeholder for streaming
-        const lastMsg = messages[messages.length - 1];
-        if (lastMsg && lastMsg.role === 'assistant' && !hasAddedFinalResponseRef.current) {
-          setChatMessages(prev => {
-            // Check if we already have a final response for this turn
-            if (prev.some(msg => msg.isFinalResponse && msg.conversationTurn === currentConversationTurn.current)) {
-              return prev;
-            }
-            
-            // Add an empty placeholder for the final response
-            return [
-              ...prev,
-              {
-                role: 'assistant',
-                content: '',  // Will be filled as content streams in
-                isFinalResponse: true,
-                conversationTurn: currentConversationTurn.current
-              }
-            ];
-          });
-        }
-      }
-    };
-
-    // Check the last message for potential tool outputs
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg && 
-        lastMsg.role === 'assistant' && 
-        lastMsg.content && 
-        lastToolCallRef.current && 
-        !lastToolCallRef.current.output && 
-        !hasAddedFinalResponseRef.current) {
-      handleToolCallOutput(lastMsg.content);
-    }
-  }, [messages]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -538,25 +473,111 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
 
   // Handle model changes
   useEffect(() => {
+    // Skip if reloading
+    if (isReloadingRef.current) return;
+    
     // Detect model change
     if (selectedModel !== previousModelRef.current) {
       previousModelRef.current = selectedModel;
       
-      // Only reload if there are existing messages
+      // Only reset if there are existing messages
       if (messages.length > 0) {
-        // Reset state before reload
-        setChatMessages([]);
-        hasAddedFinalResponseRef.current = false;
-        toolCallResponseRef.current = "";
-        toolExecutionMsgMap.current.clear();
+        // Create a new conversation with the new model
+        setConversationId(Date.now().toString());
         
-        // Reload with a small delay to allow state updates
-        setTimeout(() => {
-          reload();
-        }, 0);
+        // Reset UI state
+        setChatMessages([]);
+        setInput('');
+        setErrorDetails(null);
+        setHistoryIndex(null);
+        
+        // Reset all refs
+        resetInternalState();
       }
     }
   }, [selectedModel, messages.length]);
+  
+  // Handle tool calls that depend on the messages array
+  useEffect(() => {
+    // Skip if reloading
+    if (isReloadingRef.current) return;
+    
+    // Check the last message for potential tool outputs
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && 
+        lastMsg.role === 'assistant' && 
+        lastMsg.content && 
+        lastToolCallRef.current && 
+        !lastToolCallRef.current.output && 
+        !hasAddedFinalResponseRef.current) {
+      
+      // Save the tool call output for later use
+      toolCallResponseRef.current = lastMsg.content;
+      
+      // If we have a tool call in progress, update it with the output
+      if (lastToolCallRef.current) {
+        const toolCallId = lastToolCallRef.current.id;
+        lastToolCallRef.current.output = "Tool response received.";
+        lastToolCallRef.current.status = 'completed';
+        
+        // Update the chat message that contains this tool call
+        setChatMessages(prevMessages => {
+          // Find the message index from our map
+          const msgIndex = toolCallId ? toolExecutionMsgMap.current.get(toolCallId) : undefined;
+          
+          if (msgIndex !== undefined && typeof msgIndex === 'number' && msgIndex < prevMessages.length) {
+            const updatedMessages = [...prevMessages];
+            const messageToUpdate = updatedMessages[msgIndex];
+            
+            if (messageToUpdate.toolCalls?.length) {
+              const updatedToolCalls = messageToUpdate.toolCalls.map((tc: ToolCall) => {
+                if (tc.name === lastToolCallRef.current?.name && 
+                    JSON.stringify(tc.args) === JSON.stringify(lastToolCallRef.current?.args)) {
+                  return { ...tc, output: "Tool response received.", status: 'completed' as const };
+                }
+                return tc;
+              });
+              
+              updatedMessages[msgIndex] = {
+                ...messageToUpdate,
+                toolCalls: updatedToolCalls,
+                isToolInProgress: false,
+                content: ''
+              };
+            }
+            
+            return updatedMessages;
+          }
+          
+          return prevMessages;
+        });
+        
+        // Reset the tool call reference
+        lastToolCallRef.current = null;
+        
+        // Immediately try to add a final response placeholder for streaming
+        if (lastMsg && lastMsg.role === 'assistant' && !hasAddedFinalResponseRef.current) {
+          setChatMessages(prev => {
+            // Check if we already have a final response for this turn
+            if (prev.some(msg => msg.isFinalResponse && msg.conversationTurn === currentConversationTurn.current)) {
+              return prev;
+            }
+            
+            // Add an empty placeholder for the final response
+            return [
+              ...prev,
+              {
+                role: 'assistant',
+                content: '',  // Will be filled as content streams in
+                isFinalResponse: true,
+                conversationTurn: currentConversationTurn.current
+              }
+            ];
+          });
+        }
+      }
+    }
+  }, [messages]);
 
   const handleRetry = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -639,6 +660,21 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     }));
   };
 
+  // Completely simplified clearConversation function
+  const clearConversation = () => {
+    // Create a new conversation ID to completely reset the useChat hook
+    setConversationId(Date.now().toString());
+    
+    // Reset all UI state
+    setChatMessages([]);
+    setInput('');
+    setErrorDetails(null);
+    setHistoryIndex(null);
+    
+    // Reset all refs
+    resetInternalState();
+  };
+
   return {
     chatMessages,
     input,
@@ -656,6 +692,7 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     onFinalResponse,
     messagesEndRef,
     chatContainerRef,
-    reload
+    reload,
+    clearConversation
   };
 }

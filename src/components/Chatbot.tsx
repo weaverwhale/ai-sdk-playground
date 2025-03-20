@@ -32,7 +32,6 @@ export default function Chatbot() {
   const {
     serverStatus,
     serverInfo,
-    errorDetails: serverErrorDetails,
     availableModels,
     selectedModel,
     setSelectedModel,
@@ -55,7 +54,8 @@ export default function Chatbot() {
     toggleToolExpansion,
     onFinalResponse,
     messagesEndRef,
-    chatContainerRef
+    chatContainerRef,
+    clearConversation
   } = useChatbotMessages({ selectedModel });
 
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -94,21 +94,29 @@ export default function Chatbot() {
     <div className="chatbot-container">
       {serverInfo && <div className="server-status">{serverInfo}</div>}
       
-      <div className="model-selector">
-        <label htmlFor="model-select">AI Model:</label>
-        <select
-          id="model-select"
-          value={selectedModel}
-          onChange={handleModelChange}
-          disabled={(status === 'submitted' || status === 'streaming') || availableModels.length === 0}
+      <div className="chat-controls">
+        <div className="model-selector">
+          <select
+            id="model-select"
+            value={selectedModel}
+            onChange={handleModelChange}
+            disabled={(status === 'submitted' || status === 'streaming') || availableModels.length === 0}
+          >
+            {availableModels.length === 0 && <option value="">No models available</option>}
+            {availableModels.map(model => (
+              <option key={model.id} value={model.id}>
+                {model.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button 
+          className="clear-button"
+          onClick={clearConversation}
+          disabled={status === 'submitted' || status === 'streaming' || chatMessages.length === 0}
         >
-          {availableModels.length === 0 && <option value="">No models available</option>}
-          {availableModels.map(model => (
-            <option key={model.id} value={model.id}>
-              {model.name}
-            </option>
-          ))}
-        </select>
+          Clear Conversation
+        </button>
       </div>
       
       <div className="chat-messages" ref={chatContainerRef}>

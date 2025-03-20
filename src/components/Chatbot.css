@@ -308,19 +308,28 @@
   font-family: monospace;
 }
 
-/* Model selector styles */
-.model-selector {
+/* Chat controls styles */
+.chat-controls {
   display: flex;
   align-items: center;
+  gap: 10px;
   margin-bottom: 15px;
   background-color: #f8f9fa;
   padding: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Model selector styles */
+.model-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
 .model-selector label {
   font-weight: 600;
-  margin-right: 10px;
   color: #333;
 }
 
@@ -344,6 +353,29 @@
 
 .model-selector select:disabled {
   background-color: #e9ecef;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Clear button styles */
+.clear-button {
+  padding: 10px 12px;
+  background-color: #f87171;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.clear-button:hover {
+  background-color: #ef4444;
+}
+
+.clear-button:disabled {
+  background-color: #fca5a5;
   cursor: not-allowed;
   opacity: 0.8;
 }
