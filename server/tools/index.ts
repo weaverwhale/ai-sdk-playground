@@ -13,3 +13,12 @@ export const tools = {
   wikipedia,
   weeklyReport
 }
+
+export const geminiTools = {
+  moby, 
+  urbanDictionary, 
+  // chartGenerator, 
+  forecast, 
+  wikipedia,
+  weeklyReport
+}

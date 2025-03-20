@@ -1,7 +1,7 @@
 import { Message } from 'ai';
 import { getModelProviderById } from '../modelProviders';
 import { streamText } from 'ai';
-import { tools } from '../tools';
+import { tools, geminiTools } from '../tools';
 
 const DEFAULT_MODEL_ID = 'openai';
 
@@ -28,10 +28,12 @@ export async function handleChatRequest(body: {
       { role: 'system', content: modelProvider.defaultSystemPrompt } as Message,
       ...body.messages
     ];
+
+    const computedTools = modelId === 'gemini' ? geminiTools : tools;
     
     const result = streamText({
       model,
-      tools,
+      tools: computedTools,
       messages: messagesWithSystem,
       maxTokens: 5000,
       experimental_continueSteps: true,
