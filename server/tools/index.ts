@@ -5,11 +5,11 @@ import { forecast } from './forecast';
 import { wikipedia } from './wikipedia';
 import { weeklyReport } from './weeklyReport';
 
-export const tools = [
+export const tools = {
   moby, 
   urbanDictionary, 
   chartGenerator, 
   forecast, 
   wikipedia,
   weeklyReport
-];
+}
