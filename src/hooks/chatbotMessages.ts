@@ -38,8 +38,10 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
   const toolCallResponseRef = useRef("");
   const previousModelRef = useRef(selectedModel);
   const isReloadingRef = useRef(false);
-  const previousMessagesLengthRef = useRef(0);
-  const previousMessagesStringRef = useRef("");
+  const messagesStateRef = useRef({
+    length: 0,
+    stringified: ""
+  });
   
   // Function to reset internal state
   const resetInternalState = useCallback(() => {
@@ -69,15 +71,9 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
       args: toolCall?.args as Record<string, unknown> || {},
       status: 'running',
       description: toolInfo.description,
-      displayName: toolInfo.name
+      displayName: toolInfo.name,
+      id: `${Date.now()}-${toolCall?.toolName || 'tool'}-${Math.random().toString(36).substr(2, 5)}`
     };
-    
-    // Generate a unique ID for this tool call
-    const toolCallId = `${Date.now()}-${toolCall?.toolName || 'tool'}-${Math.random().toString(36).substr(2, 5)}`;
-    newToolCall.id = toolCallId;
-    
-    // Save the current tool call for reference
-    lastToolCallRef.current = newToolCall;
     
     // Add the tool call message - the reducer will handle storing the index
     dispatch({ 
@@ -87,6 +83,9 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
         conversationTurn: chatState.currentConversationTurn 
       } 
     });
+    
+    // Save the current tool call for reference
+    lastToolCallRef.current = newToolCall;
   }, [toolOptions, chatState.currentConversationTurn]);
   
   // Error handler for chat - must be defined before useChat
@@ -159,7 +158,7 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
   // Chat scrolling
   const { messagesEndRef, chatContainerRef } = useChatScroll(status);
   
-  // Main effect to convert AI SDK messages to our chat state format
+  // Main effect for processing messages and tool calls
   useEffect(() => {
     // Skip if messages empty or if reloading
     if (messages.length === 0 || isReloadingRef.current) return;
@@ -167,50 +166,45 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     // Check if messages have actually changed to prevent infinite loops
     const messagesString = JSON.stringify(messages);
     if (
-      previousMessagesLengthRef.current === messages.length && 
-      previousMessagesStringRef.current === messagesString
+      messagesStateRef.current.length === messages.length && 
+      messagesStateRef.current.stringified === messagesString
     ) {
       return; // Skip if messages haven't changed
     }
     
     // Update refs with current values
-    previousMessagesLengthRef.current = messages.length;
-    previousMessagesStringRef.current = messagesString;
+    messagesStateRef.current = {
+      length: messages.length,
+      stringified: messagesString
+    };
     
     const lastMsg = messages[messages.length - 1];
     
-    // Process messages from useChat
-    if (messages.length > 0) {
-      // Process user messages
-      messages.forEach(message => {
-        if (message.role === 'user') {
-          // Check if we already have this user message
-          const existingMessageIndex = chatMessages.findIndex(
-            (m: ChatMessage) => m.role === 'user' && m.content === message.content
-          );
-          
-          if (existingMessageIndex === -1) {
-            dispatch({
-              type: 'ADD_USER_MESSAGE',
-              payload: message.content
-            });
-          }
-        }
-      });
-      
-      // Process tool responses
-      if (lastMsg && 
-          lastMsg.role === 'assistant' && 
-          lastMsg.content && 
-          lastToolCallRef.current && 
-          !lastToolCallRef.current.output) {
+    // Process user messages
+    messages.forEach(message => {
+      if (message.role === 'user') {
+        // Check if we already have this user message
+        const existingMessageIndex = chatMessages.findIndex(
+          (m: ChatMessage) => m.role === 'user' && m.content === message.content
+        );
         
-        // Save the tool call output for later use
+        if (existingMessageIndex === -1) {
+          dispatch({
+            type: 'ADD_USER_MESSAGE',
+            payload: message.content
+          });
+        }
+      }
+    });
+    
+    // Process different assistant response scenarios
+    if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content) {
+      if (lastToolCallRef.current && !lastToolCallRef.current.output) {
+        // Case 1: Processing tool response
         toolCallResponseRef.current = lastMsg.content;
         
         // Update the tool call with output
         if (lastToolCallRef.current.id) {
-          // Update the tool status
           dispatch({
             type: 'UPDATE_TOOL_CALL',
             payload: {
@@ -231,18 +225,10 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
             });
           }
           
-          // Reset the tool call reference
           lastToolCallRef.current = null;
         }
-      }
-      
-      // Process regular assistant messages (non-tool responses)
-      if (lastMsg && 
-          lastMsg.role === 'assistant' && 
-          lastMsg.content && 
-          !lastToolCallRef.current && 
-          !toolCallResponseRef.current) {
-        
+      } else if (!lastToolCallRef.current && !toolCallResponseRef.current) {
+        // Case 2: Regular assistant message (non-tool response)
         dispatch({
           type: 'ADD_ASSISTANT_MESSAGE',
           payload: {
@@ -250,17 +236,8 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
             conversationTurn: chatState.currentConversationTurn
           }
         });
-      }
-      
-      // Add the final response after tool calls complete
-      if (lastMsg && 
-          lastMsg.role === 'assistant' && 
-          lastMsg.content && 
-          !lastToolCallRef.current && 
-          toolCallResponseRef.current && 
-          !hasAddedFinalResponseRef.current) {
-        
-        // Update the content of existing final response (for streaming)
+      } else if (!lastToolCallRef.current && toolCallResponseRef.current && !hasAddedFinalResponseRef.current) {
+        // Case 3: Final response after tool calls
         dispatch({
           type: 'UPDATE_FINAL_RESPONSE',
           payload: {
@@ -275,30 +252,22 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
           toolCallResponseRef.current = "";
         }
       }
-    } else if (chatMessages.length > 0) {
-      // If useChat has no messages but we do, clear our messages
-      dispatch({ type: 'CLEAR_CONVERSATION' });
     }
-  }, [messages, status, chatState.currentConversationTurn, dispatch, chatMessages]);
+  }, [messages, status, chatState.currentConversationTurn, chatMessages]);
   
-  // Reset state after loading is complete
+  // Status and tool call cleanup effect
   useEffect(() => {
+    // Reset processing flag when done
     if (status === 'ready' && isProcessingTool.current) {
       isProcessingTool.current = false;
     }
     
-    // When the status changes to ready, ensure all tool calls are properly marked as complete
+    // Fix any tool calls stuck in running state when chat becomes ready
     if (status === 'ready') {
-      let hasRunningTools = false;
-      
-      // Check for any tools that are still marked as running
       chatMessages.forEach((message: ChatMessage) => {
         if (message.toolCalls && message.toolCalls.length > 0) {
           message.toolCalls.forEach((toolCall: ToolCall) => {
             if (toolCall.status === 'running' && toolCall.id) {
-              hasRunningTools = true;
-              
-              // Update the tool status to completed
               dispatch({
                 type: 'UPDATE_TOOL_CALL',
                 payload: {
@@ -311,37 +280,25 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
           });
         }
       });
-      
-      // If we found running tools, log this for debugging
-      if (hasRunningTools) {
-        console.log('Fixed tools that were still in running state when chat became ready');
-      }
     }
   }, [status, chatMessages, dispatch]);
   
   // Handle model changes
   useEffect(() => {
-    // Skip if reloading
-    if (isReloadingRef.current) return;
+    if (isReloadingRef.current || selectedModel === previousModelRef.current) return;
     
-    // Detect model change
-    if (selectedModel !== previousModelRef.current) {
-      previousModelRef.current = selectedModel;
+    previousModelRef.current = selectedModel;
+    
+    // Only reset if there are existing messages
+    if (messages.length > 0) {
+      // Create a new conversation with the new model
+      setConversationId(Date.now().toString());
       
-      // Only reset if there are existing messages
-      if (messages.length > 0) {
-        // Create a new conversation with the new model
-        setConversationId(Date.now().toString());
-        
-        // Reset UI state
-        dispatch({ type: 'CLEAR_CONVERSATION' });
-        setInput('');
-        setErrorDetails(null);
-        setHistoryIndex(null);
-        
-        // Reset all refs
-        resetInternalState();
-      }
+      // Reset UI state and refs
+      resetInternalState();
+      setInput('');
+      setErrorDetails(null);
+      setHistoryIndex(null);
     }
   }, [selectedModel, messages.length, resetInternalState]);
   
@@ -434,14 +391,11 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     // Create a new conversation ID to completely reset the useChat hook
     setConversationId(Date.now().toString());
     
-    // Reset all UI state
-    dispatch({ type: 'CLEAR_CONVERSATION' });
+    // Reset all UI state and refs
+    resetInternalState();
     setInput('');
     setErrorDetails(null);
     setHistoryIndex(null);
-    
-    // Reset all refs
-    resetInternalState();
   }, [resetInternalState]);
 
   return {
