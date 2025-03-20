@@ -5,6 +5,7 @@ export async function handleToolsRequest() {
   try {
     // Map the tools to a format that's safe to send to the client
     const toolInfo = Object.values(tools).map(tool => ({
+      id: tool.id,
       name: tool.name,
       description: tool.description
     }));

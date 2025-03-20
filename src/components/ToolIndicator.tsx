@@ -1,13 +1,13 @@
 import React from 'react';
 
 interface ToolIndicatorProps {
-  toolName: string;
+  name: string;
   isActive: boolean;
   description?: string;
 }
 
 const ToolIndicator: React.FC<ToolIndicatorProps> = ({ 
-  toolName, 
+  name, 
   isActive,
   description 
 }) => {
@@ -18,7 +18,7 @@ const ToolIndicator: React.FC<ToolIndicatorProps> = ({
       <div className="tool-indicator-spinner"></div>
       <div className="tool-indicator-content">
         <div className="tool-indicator-name">
-          {toolName === "AI Tool" ? "Processing request..." : `Using ${toolName}`}
+          {name === "AI Tool" ? "Processing request..." : `Using ${name}`}
         </div>
         {description && <div className="tool-indicator-description">{description}</div>}
       </div>

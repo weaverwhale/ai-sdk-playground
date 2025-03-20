@@ -1,13 +1,13 @@
-'use client';
-
 import { useChat } from '@ai-sdk/react';
 import { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import './Chatbot.css';
 import ToolIndicator from './ToolIndicator';
 import MermaidDiagram from './MermaidDiagram';
+import type { Components } from 'react-markdown';
+
+import './Chatbot.css';
 
 interface ToolCall {
   name: string;
@@ -15,6 +15,7 @@ interface ToolCall {
   output?: string;
   description?: string;
   status?: 'running' | 'completed' | 'error';
+  displayName?: string;
 }
 
 interface ChatMessage {
@@ -30,7 +31,7 @@ interface Model {
 }
 
 // Create a more permissive code component for ReactMarkdown
-const CodeBlock = (props: any) => {
+const CodeBlock: Components['code'] = (props) => {
   const { className, children } = props;
   const language = className ? className.replace('language-', '') : '';
   const content = String(children).trim();
@@ -48,6 +49,13 @@ const CodeBlock = (props: any) => {
   );
 };
 
+// Create an interface for tool info with name instead of displayName
+interface ToolInfo {
+  id: string;
+  description: string;
+  name: string;
+}
+
 export default function Chatbot() {
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [serverInfo, setServerInfo] = useState<string | null>(null);
@@ -58,7 +66,7 @@ export default function Chatbot() {
     return storedModel || 'openai';
   });
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
-  const [toolDescriptions, setToolDescriptions] = useState<Record<string, string>>({});
+  const [toolOptions, setToolOptions] = useState<Record<string, ToolInfo>>({});
   const [activeToolCall, setActiveToolCall] = useState<{name: string, description?: string} | null>(null);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
   const isProcessingTool = useRef(false);
@@ -87,12 +95,13 @@ export default function Chatbot() {
       isProcessingTool.current = true;
       
       // Get the tool name directly from the event
-      const toolName = event.toolCall?.toolName || "AI Tool";
+      const toolInfo = toolOptions[event.toolCall?.toolName];
+      const toolName = toolInfo?.name || "AI Tool";
       
       // Set the active tool with its description if available
       setActiveToolCall({
         name: toolName,
-        description: toolDescriptions[toolName] || "Using tool to retrieve information"
+        description: toolInfo?.description || "Using tool to retrieve information",
       });
     }
   });
@@ -204,24 +213,29 @@ export default function Chatbot() {
   }, [selectedModel]);
 
   useEffect(() => {
-    const fetchToolDescriptions = async () => {
+    const fetchToolOptions = async () => {
       try {
         const response = await fetch('/api/tools');
         const data = await response.json();
         
         if (data && Array.isArray(data.tools)) {
-          const descriptions: Record<string, string> = {};
-          data.tools.forEach((tool: { name: string; description: string }) => {
-            descriptions[tool.name] = tool.description || 'No description available';
+          const options: Record<string, ToolInfo> = {};
+          data.tools.forEach((tool: ToolInfo) => {
+            options[tool.id] = {
+              id: tool.id,
+              description: tool.description || 'No description available',
+              name: tool.name || tool.id
+            };
           });
-          setToolDescriptions(descriptions);
+          
+          setToolOptions(options);
         }
       } catch {
         // Silently fail
       }
     };
     
-    fetchToolDescriptions();
+    fetchToolOptions();
   }, []);
 
   const handleRetry = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -397,6 +411,7 @@ export default function Chatbot() {
               
               {toolCalls.map((toolCall, idx) => {
                 const isExpanded = expandedTools[`${index}-${idx}`] !== false;
+                const toolInfo = toolOptions[toolCall.name];
                 
                 return (
                   <div key={idx} className="tool-invocation">
@@ -406,15 +421,15 @@ export default function Chatbot() {
                     >
                       <div className="tool-name">
                         <span className="tool-icon">🔧</span>
-                        {toolDescriptions[toolCall.name] ? 
-                          <>Tool: <span className="tool-name-text">{toolCall.name}</span></> : 
+                        {toolInfo ? 
+                          <>Tool: <span className="tool-name-text">{toolInfo.name}</span></> : 
                           "AI Tool"
                         }
                         <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
                       </div>
-                      {toolDescriptions[toolCall.name] && (
+                      {toolInfo && (
                         <div className="tool-description">
-                          {toolDescriptions[toolCall.name]}
+                          {toolInfo.description}
                         </div>
                       )}
                     </div>
@@ -455,7 +470,7 @@ export default function Chatbot() {
               {activeToolCall ? (
                 <div className="thinking-with-tool">
                   <ToolIndicator 
-                    toolName={activeToolCall.name} 
+                    name={activeToolCall.name} 
                     isActive={true} 
                     description={activeToolCall.description}
                   />
