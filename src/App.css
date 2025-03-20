@@ -16,8 +16,15 @@ body {
   margin: 0 auto;
 }
 
+
 .app-container {
   padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    padding: 1rem;
+  }
 }
 
 h1 {

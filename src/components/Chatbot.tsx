@@ -115,7 +115,7 @@ export default function Chatbot() {
           onClick={clearConversation}
           disabled={status === 'submitted' || status === 'streaming' || chatMessages.length === 0}
         >
-          Clear Conversation
+          Clear
         </button>
       </div>
       
