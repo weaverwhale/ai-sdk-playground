@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
+import { useState, useEffect, useRef, useCallback, useReducer } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { 
   ToolCall, 
@@ -33,7 +33,7 @@ export function useChatbotMessages({
   });
   
   // Extract values from state
-  const { chatMessages, searchPlan } = chatState;
+  const { chatMessages } = chatState;
   
   // Set up deep search hook
   const { 
@@ -44,6 +44,8 @@ export function useChatbotMessages({
     error: deepSearchError
   } = useDeepSearch({
     enabled: isDeepSearchMode,
+    orchestratorModel: selectedModel,
+    workerModel: selectedModel,
     onPlanCreated: (plan) => {
       console.log('[DEEP SEARCH] Plan created, updating UI:', plan);
       dispatch({ 
@@ -217,13 +219,6 @@ export function useChatbotMessages({
       }, 100);
     }
   }, [originalReload]);
-  
-  // Detect final response
-  const onFinalResponse = useMemo(() => chatMessages.some(msg => 
-    msg.role === 'assistant' && 
-    msg.isFinalResponse === true && 
-    msg.conversationTurn === chatState.currentConversationTurn
-  ), [chatMessages, chatState.currentConversationTurn]);
   
   // Chat scrolling
   const { messagesEndRef, chatContainerRef } = useChatScroll(status);

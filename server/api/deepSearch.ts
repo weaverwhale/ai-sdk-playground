@@ -1,6 +1,7 @@
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { getModelProviderById } from '../modelProviders';
+import type { LanguageModelV1 } from 'ai';
 
 // Global store for search plans
 // This needs to be exported so it can be used by the server
@@ -24,9 +25,8 @@ export interface SearchPlan {
   summary?: string; // Summary of all findings after execution
 }
 
-// Define any type for model to avoid TypeScript errors
-// This is a simplification as the AI SDK types are complex
-type AIModel = any;
+// Define the type for the AI model
+type AIModel = LanguageModelV1;
 
 // Function to safely update the search plan in the global map
 export function updateSearchPlan(planId: string, updatedPlan: SearchPlan): void {
@@ -354,8 +354,11 @@ export async function executeSearchPlan(plan: SearchPlan, workerModel: AIModel):
           Create a well-structured summary that synthesizes the key findings from all steps, highlighting the most important insights that answer the original query.`,
         });
         
+        console.log(`[DEEP SEARCH] Summary generated for plan ${finalPlan.createdAt}: ${finalPlan.summary}`);
+        
         // Update the plan with the generated summary
         finalPlan.summary = summaryResult.summary;
+
         
         // Update the plan in the global map with the summary
         updateSearchPlan(finalPlan.createdAt, finalPlan);

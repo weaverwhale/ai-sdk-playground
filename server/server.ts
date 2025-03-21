@@ -7,7 +7,7 @@ import { handleChatRequest } from '../server/api/chat';
 import { handleToolsRequest } from '../server/api/tools';
 import { handleDeepSearchRequest, getSearchPlan, searchPlans, executeSearchPlan } from '../server/api/deepSearch';
 import { Readable } from 'stream';
-import { getAvailableModelProviders } from './modelProviders';
+import { getAvailableModelProviders, getModelProviderById } from './modelProviders';
 
 const app = express();
 const PORT = process.env.PORT || 1753;
@@ -25,6 +25,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// health check
 app.get('/api/health', (_req, res) => {
   res.json({ 
     status: 'ok', 
@@ -32,6 +33,7 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+// models
 app.get('/api/models', (_req, res) => {
   try {
     const availableModels = getAvailableModelProviders();
@@ -47,7 +49,7 @@ app.get('/api/models', (_req, res) => {
   }
 });
 
-// Add new endpoint for tools information
+// tools information
 app.get('/api/tools', async (_req, res) => {
   try {
     console.log('[SERVER] Getting tools information...');
@@ -67,7 +69,7 @@ app.get('/api/tools', async (_req, res) => {
   }
 });
 
-// Add new endpoint for deep search
+// deep search
 app.post('/api/deep-search', async (req, res) => {
   try {
     const { query, orchestratorModelId, workerModelId, executeAll } = req.body;
@@ -95,10 +97,10 @@ app.post('/api/deep-search', async (req, res) => {
   }
 });
 
-// Add endpoint to execute a previously created deep search plan
+// execute a previously created deep search plan
 app.post('/api/execute-deep-search', async (req, res) => {
   try {
-    const { planId } = req.query;
+    const { planId, orchestratorModelId } = req.body;
     
     if (!planId || typeof planId !== 'string') {
       console.error('[SERVER] Execute deep search API - Missing or invalid planId:', planId);
@@ -126,13 +128,12 @@ app.post('/api/execute-deep-search', async (req, res) => {
       });
     }
     
-    // Use the first available model provider
-    const workerProvider = availableProviders[0];
-    console.log(`[SERVER] Execute deep search API - Using model provider: ${workerProvider.name}`);
+    const orchestratorProvider = getModelProviderById(orchestratorModelId) || availableProviders[0];
+    console.log(`[SERVER] Execute deep search API - Using model provider: ${orchestratorProvider.name}`);
     
     // Execute the plan in the background
     // We don't await this because it can take a long time and we want to return quickly
-    executeSearchPlan(plan, workerProvider.model)
+    executeSearchPlan(plan, orchestratorProvider.model)
       .then(updatedPlan => {
         console.log(`[SERVER] Plan execution complete for plan ID: ${updatedPlan.createdAt}`);
       })
@@ -144,7 +145,7 @@ app.post('/api/execute-deep-search', async (req, res) => {
     res.json({ 
       message: 'Plan execution started',
       planId: plan.createdAt,
-      modelProvider: workerProvider.name
+      modelProvider: orchestratorProvider.name
     });
   } catch (error) {
     console.error('[SERVER] Execute deep search API error:', error);
@@ -155,7 +156,7 @@ app.post('/api/execute-deep-search', async (req, res) => {
   }
 });
 
-// Add endpoint to get current status of a deep search plan
+// get current status of a deep search plan
 app.get('/api/deep-search-status', async (req, res) => {
   try {
     const { planId } = req.query;

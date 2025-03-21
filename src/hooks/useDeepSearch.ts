@@ -395,7 +395,12 @@ export function useDeepSearch({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify({
+            planId,
+            orchestratorModel,
+            workerModel,
+          })
         });
         
         if (!executeResponse.ok) {
