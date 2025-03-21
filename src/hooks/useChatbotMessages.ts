@@ -53,11 +53,17 @@ export function useChatbotMessages({
         conversationTurn: chatState.currentConversationTurn,
       });
     },
-    onStepUpdate: (stepId, status, output, error) => {
+    onStepUpdate: (stepId, status, output, error, toolCalls) => {
       console.log(`[DEEP SEARCH] Step update: ${stepId} -> ${status}`);
       dispatch({
         type: 'UPDATE_PLAN_STEP',
-        payload: { stepId, status, output, error },
+        payload: {
+          stepId,
+          status,
+          output,
+          error,
+          toolCalls,
+        },
       });
     },
     onPlanCompleted: (plan) => {

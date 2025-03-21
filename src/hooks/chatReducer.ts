@@ -33,7 +33,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       };
 
     case 'ADD_ASSISTANT_MESSAGE': {
-      // Check if we already have a non-tool message for this turn
+      // Check if we already have a non-tool call message for this turn
       const existingMsgIndex = state.chatMessages.findIndex(
         (msg: ChatMessage) =>
           msg.role === 'assistant' &&
@@ -98,7 +98,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
     }
 
     case 'ADD_TOOL_CALL': {
-      // Add the tool call message and store its index in the map
+      // Add the tool result message and store its index in the map
       const newMessages = [
         ...state.chatMessages,
         {
@@ -229,6 +229,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
             status: action.payload.status,
             ...(action.payload.output && { output: action.payload.output }),
             ...(action.payload.error && { error: action.payload.error }),
+            ...(action.payload.toolCalls && { toolCalls: action.payload.toolCalls }),
           };
         }
         // Return the same step object for unchanged steps

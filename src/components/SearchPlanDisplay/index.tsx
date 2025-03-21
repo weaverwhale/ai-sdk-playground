@@ -1,27 +1,27 @@
 import { useEffect, memo, useState } from 'react';
-import { SearchPlan, PlanStep } from '../../types/chatTypes';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import { SearchPlan, PlanStep, ToolCall, ToolInfo } from '../../types/chatTypes';
 
 import './index.css';
 
 interface SearchPlanDisplayProps {
   plan: SearchPlan;
   className?: string;
+  toolOptions: Record<string, ToolInfo>;
+}
+
+interface SearchPlanStepCardProps {
+  step: PlanStep;
+  isExpanded: boolean;
+  toggleExpansion: () => void;
+  toolOptions: Record<string, ToolInfo>;
 }
 
 // Use memo to optimize rendering with custom comparison
 const SearchPlanStepCard = memo(
-  ({
-    step,
-    isExpanded,
-    toggleExpansion,
-  }: {
-    step: PlanStep;
-    isExpanded: boolean;
-    toggleExpansion: () => void;
-  }) => {
+  ({ step, isExpanded, toggleExpansion, toolOptions }: SearchPlanStepCardProps) => {
     // Status indicator styling
     const getStatusStyles = () => {
       switch (step.status) {
@@ -69,13 +69,61 @@ const SearchPlanStepCard = memo(
           </div>
         )}
 
-        {isExpanded && step.output && (
-          <div className="step-output">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-              {step.output}
-            </ReactMarkdown>
-          </div>
-        )}
+        {isExpanded &&
+          (step.toolCalls && step.toolCalls.length > 0 ? (
+            <div className="step-output">
+              <div className="step-tool-calls">
+                <div className="tools-header">
+                  <span className="tools-header-text">Tool Calls ({step.toolCalls.length})</span>
+                </div>
+                {step.toolCalls.map((toolCall: ToolCall, idx: number) => (
+                  <div key={idx} className="tool-call-item">
+                    <div className="tool-call-header">
+                      <span className="tool-call-badge">
+                        <span className="tool-icon">🔧</span>
+                        Tool used:{' '}
+                        <strong>{toolOptions[toolCall.name]?.name || toolCall.name}</strong>
+                      </span>
+                    </div>
+                    <div className="tool-call-result">
+                      {toolCall.output ? (
+                        <>
+                          {toolCall.output.length > 500 ? (
+                            <div className="tool-result-preview">
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                rehypePlugins={[rehypeRaw]}
+                              >
+                                {`${toolCall.output.substring(0, 10000)}...`}
+                              </ReactMarkdown>
+                              <div className="tool-result-info">(Result truncated)</div>
+                            </div>
+                          ) : (
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                              {toolCall.output}
+                            </ReactMarkdown>
+                          )}
+                        </>
+                      ) : (
+                        <p className="no-result">No result data available from this tool.</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : step.output ? (
+            <>
+              {step.toolCalls && step.toolCalls.length > 0 && (
+                <div className="output-separator">
+                  <span className="output-header-text">Step Output</span>
+                </div>
+              )}
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                {step.output}
+              </ReactMarkdown>
+            </>
+          ) : null)}
 
         {isExpanded && step.error && (
           <div className="step-error">
@@ -114,7 +162,7 @@ const SearchPlanStepCard = memo(
 
 // Use memo for the main component as well with custom comparison
 const SearchPlanDisplay = memo(
-  ({ plan, className = '' }: SearchPlanDisplayProps) => {
+  ({ plan, className = '', toolOptions }: SearchPlanDisplayProps) => {
     // Use a local counter to force re-renders
     const [updateCounter, setUpdateCounter] = useState(0);
 
@@ -224,6 +272,7 @@ const SearchPlanDisplay = memo(
               step={step}
               isExpanded={!!expandedSteps[step.id]}
               toggleExpansion={() => toggleStepExpansion(step.id)}
+              toolOptions={toolOptions}
             />
           ))}
         </div>

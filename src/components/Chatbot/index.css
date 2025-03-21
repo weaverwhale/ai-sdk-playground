@@ -170,10 +170,9 @@
 .tool-response {
   white-space: pre-wrap;
   word-break: break-word;
-  margin-bottom: 0.25rem;
   padding: 0.5rem;
+  margin-bottom: 0.5rem;
   border-left: 2px solid #e2e8f0;
-  margin-left: 0.5rem;
 }
 
 .tool-args pre {
@@ -542,7 +541,7 @@ input:checked + .toggle-slider:before {
     grid-template-columns: 1fr 1fr;
   }
 
-  .chat-messages {
+  .messages-container.deep-search .chat-messages {
     border-right: 1px solid #e0e0e0;
   }
 }

@@ -82,8 +82,6 @@ const Message = memo(
   },
 );
 
-Message.displayName = 'Message';
-
 // Extracted ToolCalls component
 const ToolCallsDisplay = memo(
   ({
@@ -153,8 +151,6 @@ const ToolCallsDisplay = memo(
     );
   },
 );
-
-ToolCallsDisplay.displayName = 'ToolCallsDisplay';
 
 // Extracted ChatMessages component
 const ChatMessages = memo(
@@ -414,7 +410,7 @@ const Chatbot: React.FC = () => {
         {/* Display search plan if in deep search mode and plan exists */}
         {isDeepSearchMode && searchPlan && (
           <div className="message assistant search-plan-container">
-            <SearchPlanDisplay plan={searchPlan} />
+            <SearchPlanDisplay plan={searchPlan} toolOptions={toolOptions} />
           </div>
         )}
       </div>

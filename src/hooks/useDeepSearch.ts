@@ -1,11 +1,17 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { SearchPlan, PlanStepStatus } from '../types/chatTypes';
+import { SearchPlan, PlanStepStatus, ToolCall } from '../types/chatTypes';
 
 interface UseDeepSearchProps {
   orchestratorModel?: string;
   workerModel?: string;
   onPlanCreated?: (plan: SearchPlan) => void;
-  onStepUpdate?: (stepId: string, status: PlanStepStatus, output?: string, error?: string) => void;
+  onStepUpdate?: (
+    stepId: string,
+    status: PlanStepStatus,
+    output?: string,
+    error?: string,
+    toolCalls?: ToolCall[],
+  ) => void;
   onPlanCompleted?: (plan: SearchPlan) => void; // Callback for when plan is completed with summary
   pollingInterval?: number; // Polling interval in milliseconds
 }
@@ -96,7 +102,13 @@ export function useDeepSearch({
           // Notify the UI about the error
           activePlanRef.current.steps.forEach((step) => {
             if (step.status === 'pending' || step.status === 'running') {
-              onStepUpdate?.(step.id, 'error', undefined, `Server error: ${response.statusText}`);
+              onStepUpdate?.(
+                step.id,
+                'error',
+                undefined,
+                `Server error: ${response.statusText}`,
+                step.toolCalls,
+              );
             }
           });
         }
@@ -165,7 +177,15 @@ export function useDeepSearch({
 
         // Notify for each step individually
         newPlan.steps.forEach((step) => {
-          onStepUpdate?.(step.id, step.status, step.output, step.error);
+          onStepUpdate?.(step.id, step.status, step.output, step.error, step.toolCalls);
+
+          // Log tool call information if available
+          if (step.toolCalls && step.toolCalls.length > 0) {
+            console.log(
+              `[DEEP SEARCH] Step ${step.id} has ${step.toolCalls.length} tool call(s)`,
+              step.toolCalls,
+            );
+          }
         });
 
         // Check if the plan has a summary and all steps are complete
@@ -248,6 +268,7 @@ export function useDeepSearch({
                     'error',
                     undefined,
                     `Polling stopped: Too many failed attempts to check status`,
+                    step.toolCalls,
                   );
                 }
               });
@@ -490,6 +511,7 @@ export function useDeepSearch({
               'error',
               undefined,
               `Failed to execute step: ${error instanceof Error ? error.message : String(error)}`,
+              step.toolCalls,
             );
           }
         });

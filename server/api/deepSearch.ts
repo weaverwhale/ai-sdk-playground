@@ -15,6 +15,10 @@ interface PlanStep {
   status: 'pending' | 'running' | 'completed' | 'error';
   output?: string;
   error?: string;
+  toolCalls?: {
+    name: string;
+    output: string;
+  }[];
 }
 
 export interface SearchPlan {
@@ -289,14 +293,22 @@ export async function executeSearchPlan(
           stream: false,
         });
 
-        // @TODO handle tool calls better?
+        // set the output to the result text
+        step.output = result.text;
 
-        step.output =
-          'toolResults' in result && result.toolResults.length > 0
-            ? result.toolResults[0].result
-            : result.text.length > 0
-            ? result.text
-            : JSON.stringify(result);
+        // Add tool call information to step data if available
+        // NOTE toolResults = toolCalls, we get it as toolResults here
+        if ('toolResults' in result && result.toolResults.length > 0) {
+          console.log(
+            `[DEEP SEARCH] Tool results for step ${step.id} (${result.toolResults.length})`,
+          );
+
+          // Also create the new toolResults format
+          step.toolCalls = result.toolResults.map((toolResult) => ({
+            name: toolResult.toolName || 'unknown',
+            output: toolResult.result || '',
+          }));
+        }
 
         // Update step with the result and change status to completed
         step.status = 'completed';

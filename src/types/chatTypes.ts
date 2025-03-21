@@ -39,12 +39,18 @@ export interface Model {
 
 export type PlanStepStatus = 'pending' | 'running' | 'completed' | 'error';
 
+export interface PlanStepToolResult {
+  toolName: string;
+  result: string;
+}
+
 export interface PlanStep {
   id: string;
   description: string;
   status: PlanStepStatus;
   output?: string;
   error?: string;
+  toolCalls?: ToolCall[];
 }
 
 export interface SearchPlan {
@@ -114,7 +120,13 @@ export type ChatAction =
   | { type: 'SET_SEARCH_PLAN'; plan: SearchPlan; conversationTurn: number }
   | {
       type: 'UPDATE_PLAN_STEP';
-      payload: { stepId: string; status: PlanStepStatus; output?: string; error?: string };
+      payload: {
+        stepId: string;
+        status: PlanStepStatus;
+        output?: string;
+        error?: string;
+        toolCalls?: ToolCall[];
+      };
     }
   | { type: 'UPDATE_SEARCH_PLAN'; plan: SearchPlan; conversationTurn: number }
   | { type: 'MARK_PLAN_STEPS_ERROR'; error: string; conversationTurn: number }
