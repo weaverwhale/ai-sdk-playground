@@ -116,9 +116,7 @@ const ToolCallsDisplay = memo(
                   <>
                     Calling<span className="tool-name-text">{displayName}</span>
                   </>
-                  {status === 'completed' && (
-                    <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
-                  )}
+                  <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
                 </div>
                 <div className="tool-description">{description}</div>
                 {status === 'running' && (

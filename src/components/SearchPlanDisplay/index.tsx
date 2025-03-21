@@ -42,7 +42,14 @@ const SearchPlanStepCard = memo(
 
     return (
       <div className="search-plan-step" data-status={step.status} data-step-id={step.id}>
-        <div className="step-header" onClick={toggleExpansion}>
+        <div
+          className="step-header"
+          onClick={() => {
+            if (step.status === 'completed') {
+              toggleExpansion();
+            }
+          }}
+        >
           <span className="step-icon" style={{ color: statusStyles.color }}>
             {statusStyles.icon}
           </span>
@@ -50,7 +57,9 @@ const SearchPlanStepCard = memo(
           <span className="step-status" style={{ color: statusStyles.color }}>
             {step.status}
           </span>
-          <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
+          {step.status === 'completed' && (
+            <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
+          )}
         </div>
 
         {step.status === 'running' && (
