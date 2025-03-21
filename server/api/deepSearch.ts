@@ -2,6 +2,7 @@ import { generateObject, type LanguageModelV1, type Message } from 'ai';
 import { z } from 'zod';
 import { getModelProviderById, ModelProvider } from '../modelProviders';
 import { handleChatRequest } from './chat';
+import { defaultSystemPrompt } from '../prompt';
 
 // Global store for search plans
 // This needs to be exported so it can be used by the server
@@ -151,8 +152,11 @@ async function createSearchPlan(query: string, orchestratorModel: AIModel): Prom
         ),
         complexity: z.enum(['low', 'medium', 'high']),
       }),
-      system:
-        'You are a strategic search planner that breaks down complex queries into a step-by-step plan.',
+      system: `
+      ${defaultSystemPrompt}
+      **Instructions:**
+      You are a strategic search planner that breaks down complex queries into a step-by-step plan.
+      `,
       prompt: `Analyze this search query and create a detailed plan to answer it:
       "${query}"
       
@@ -285,9 +289,7 @@ export async function executeSearchPlan(
           stream: false,
         });
 
-        // Extract the text from the result
-        const text = result.text;
-        step.output = text;
+        step.output = JSON.stringify(result);
 
         // Update step with the result and change status to completed
         step.status = 'completed';
