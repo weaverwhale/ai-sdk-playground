@@ -4,8 +4,8 @@ import { v4 as uuidV4 } from 'uuid';
 
 dotenv.config();
 
-const MOBY_TLD = 'http://willy.srv.whale3.io'
-const MOBY_ENDPOINT = `${MOBY_TLD}/answer-nlq-question`
+const MOBY_TLD = 'http://willy.srv.whale3.io';
+const MOBY_ENDPOINT = `${MOBY_TLD}/answer-nlq-question`;
 
 // Define the parameter types to match the zod schema
 type MobyParams = {
@@ -28,10 +28,7 @@ const moby = {
       .optional()
       .describe('Shopify store URL')
       .default('madisonbraids.myshopify.com'),
-    parentMessageId: z
-      .string()
-      .optional()
-      .describe('Parent message ID for conversation context'),
+    parentMessageId: z.string().optional().describe('Parent message ID for conversation context'),
   }),
   execute: async ({ question, shopId, parentMessageId }: MobyParams) => {
     console.log('[API] Executing moby tool with params:', question, shopId);
@@ -62,8 +59,7 @@ const moby = {
       }
 
       const data = await response.json();
-      const lastMessageText =
-        data.messages?.[data.messages.length - 1]?.text + ' ';
+      const lastMessageText = data.messages?.[data.messages.length - 1]?.text + ' ';
 
       return lastMessageText || 'No answer received from Moby. ';
     } catch (error) {

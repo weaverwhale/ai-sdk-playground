@@ -13,26 +13,26 @@ export function useToolOptions() {
       try {
         const response = await fetch('/api/tools');
         const data = await response.json();
-        
+
         if (data && Array.isArray(data.tools)) {
           const options: Record<string, ToolInfo> = {};
           data.tools.forEach((tool: ToolInfo) => {
             options[tool.id] = {
               id: tool.id,
               description: tool.description || 'No description available',
-              name: tool.name || tool.id
+              name: tool.name || tool.id,
             };
           });
-          
+
           setToolOptions(options);
         }
       } catch {
         // Silently fail
       }
     };
-    
+
     fetchToolOptions();
   }, []);
 
   return toolOptions;
-} 
+}

@@ -27,4 +27,4 @@ const wikipedia = {
   },
 };
 
-export { wikipedia }; 
+export { wikipedia };

@@ -95,20 +95,20 @@
   transition: all 0.2s ease;
 }
 
-.search-plan-step[data-status="pending"] {
+.search-plan-step[data-status='pending'] {
   border-left-color: #95a5a6;
 }
 
-.search-plan-step[data-status="running"] {
+.search-plan-step[data-status='running'] {
   border-left-color: #3498db;
   background-color: #f0f7ff;
 }
 
-.search-plan-step[data-status="completed"] {
+.search-plan-step[data-status='completed'] {
   border-left-color: #2ecc71;
 }
 
-.search-plan-step[data-status="error"] {
+.search-plan-step[data-status='error'] {
   border-left-color: #e74c3c;
   background-color: #fff8f8;
 }
@@ -199,9 +199,9 @@
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .plan-meta {
     flex-direction: column;
     gap: 4px;
   }
-} 
+}

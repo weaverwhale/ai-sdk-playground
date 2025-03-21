@@ -50,7 +50,7 @@ export interface PlanStep {
 export interface SearchPlan {
   createdAt: string;
   query: string;
-  complexity: "low" | "medium" | "high";
+  complexity: 'low' | 'medium' | 'high';
   steps: PlanStep[];
   conversationTurn?: number;
   summary?: string;
@@ -105,12 +105,18 @@ export type ChatAction =
   | { type: 'ADD_ASSISTANT_MESSAGE'; payload: { content: string; conversationTurn: number } }
   | { type: 'UPDATE_ASSISTANT_MESSAGE'; payload: { content: string; conversationTurn: number } }
   | { type: 'ADD_TOOL_CALL'; payload: { toolCall: ToolCall; conversationTurn: number } }
-  | { type: 'UPDATE_TOOL_CALL'; payload: { toolCallId: string; status: 'completed' | 'error'; output?: string } }
+  | {
+      type: 'UPDATE_TOOL_CALL';
+      payload: { toolCallId: string; status: 'completed' | 'error'; output?: string };
+    }
   | { type: 'ADD_FINAL_RESPONSE'; payload: { content: string; conversationTurn: number } }
   | { type: 'UPDATE_FINAL_RESPONSE'; payload: { content: string; conversationTurn: number } }
   | { type: 'INCREMENT_CONVERSATION_TURN' }
   | { type: 'SET_SEARCH_PLAN'; plan: SearchPlan; conversationTurn: number }
-  | { type: 'UPDATE_PLAN_STEP'; payload: { stepId: string; status: PlanStepStatus; output?: string; error?: string } }
+  | {
+      type: 'UPDATE_PLAN_STEP';
+      payload: { stepId: string; status: PlanStepStatus; output?: string; error?: string };
+    }
   | { type: 'UPDATE_SEARCH_PLAN'; plan: SearchPlan; conversationTurn: number }
   | { type: 'MARK_PLAN_STEPS_ERROR'; error: string; conversationTurn: number }
   | { type: 'SET_IS_CREATING_PLAN'; isCreatingPlan: boolean };
@@ -164,4 +170,4 @@ export interface SearchPlanProps {
 
 export interface SearchPlanStepProps {
   step: PlanStep;
-} 
+}

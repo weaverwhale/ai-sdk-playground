@@ -33,17 +33,19 @@ export function updateSearchPlan(planId: string, updatedPlan: SearchPlan): void 
   // Always create a deep copy before storing
   const planCopy = JSON.parse(JSON.stringify(updatedPlan));
   searchPlans.set(planId, planCopy);
-  
+
   // Log the update to verify
-  console.log(`[DEEP SEARCH] Updated plan ${planId} in global map:`, 
-    planCopy.steps.map((s: PlanStep) => ({ id: s.id, status: s.status })));
+  console.log(
+    `[DEEP SEARCH] Updated plan ${planId} in global map:`,
+    planCopy.steps.map((s: PlanStep) => ({ id: s.id, status: s.status })),
+  );
 }
 
 // Function to safely get a search plan from the global map
 export function getSearchPlan(planId: string): SearchPlan | undefined {
   const plan = searchPlans.get(planId);
   if (!plan) return undefined;
-  
+
   // Return a deep copy to prevent accidental mutations
   return JSON.parse(JSON.stringify(plan));
 }
@@ -58,9 +60,9 @@ export async function handleDeepSearchRequest(body: {
   try {
     const {
       query,
-      orchestratorModelId = 'openai',  // Default to standard model
+      orchestratorModelId = 'openai', // Default to standard model
       workerModelId = 'openai',
-      executeAll = true,  // By default, execute all steps
+      executeAll = true, // By default, execute all steps
     } = body;
 
     // Validate input
@@ -83,14 +85,14 @@ export async function handleDeepSearchRequest(body: {
     // Use the orchestrator to create a search plan
     console.log(`[DEEP SEARCH] Creating search plan for query: "${query}"`);
     const plan = await createSearchPlan(query, orchestratorProvider.model);
-    
+
     // Debug: Get a snapshot of all existing plans before adding the new one
     const existingPlans = Array.from(searchPlans.keys());
     console.log(`[DEEP SEARCH] Existing plans before adding new plan: ${existingPlans.join(', ')}`);
-    
+
     // Store the plan in the global map using the createdAt ID
     updateSearchPlan(plan.createdAt, plan);
-    
+
     // Verify the plan was added successfully
     if (searchPlans.has(plan.createdAt)) {
       console.log(`[DEEP SEARCH] Successfully stored plan with ID: ${plan.createdAt}`);
@@ -100,25 +102,34 @@ export async function handleDeepSearchRequest(body: {
 
     // If executeAll is true, execute all steps in the plan
     if (executeAll) {
-      console.log(`[DEEP SEARCH] Executing search plan with ${plan.steps.length} steps and ID: ${plan.createdAt}`);
-      
+      console.log(
+        `[DEEP SEARCH] Executing search plan with ${plan.steps.length} steps and ID: ${plan.createdAt}`,
+      );
+
       // IMPORTANT: We need to use the SAME plan object that was created,
       // not create a new one during execution
       executeSearchPlan(plan, workerProvider.model)
-        .then(updatedPlan => {
+        .then((updatedPlan) => {
           // Verify we're updating with the same ID
           if (updatedPlan.createdAt !== plan.createdAt) {
-            console.error(`[DEEP SEARCH] Plan ID changed during execution! Original: ${plan.createdAt}, New: ${updatedPlan.createdAt}`);
+            console.error(
+              `[DEEP SEARCH] Plan ID changed during execution! Original: ${plan.createdAt}, New: ${updatedPlan.createdAt}`,
+            );
             // Force it back to the original ID
             updatedPlan.createdAt = plan.createdAt;
           }
-          
+
           // Update the plan in the global map once execution is complete
           updateSearchPlan(updatedPlan.createdAt, updatedPlan);
-          console.log(`[DEEP SEARCH] Plan execution complete for plan ID: ${updatedPlan.createdAt}`);
+          console.log(
+            `[DEEP SEARCH] Plan execution complete for plan ID: ${updatedPlan.createdAt}`,
+          );
         })
-        .catch(err => {
-          console.error(`[DEEP SEARCH] Background execution error for plan ${plan.createdAt}:`, err);
+        .catch((err) => {
+          console.error(
+            `[DEEP SEARCH] Background execution error for plan ${plan.createdAt}:`,
+            err,
+          );
         });
     }
 
@@ -138,7 +149,9 @@ async function createSearchPlan(query: string, orchestratorModel: AIModel): Prom
       schema: z.object({
         steps: z.array(
           z.object({
-            description: z.string().describe('A detailed description of what this step will accomplish'),
+            description: z
+              .string()
+              .describe('A detailed description of what this step will accomplish'),
           }),
         ),
         complexity: z.enum(['low', 'medium', 'high']),
@@ -155,12 +168,12 @@ async function createSearchPlan(query: string, orchestratorModel: AIModel): Prom
     // Create a fixed identifier for this plan
     // Use a rounded timestamp to avoid millisecond differences
     const roundedTimestamp = Math.floor(Date.now() / 1000) * 1000;
-    
+
     // Create a stable plan ID that won't change during execution
     const planId = `plan-${roundedTimestamp}`;
-    
+
     console.log(`[DEEP SEARCH] Creating plan with stable ID: ${planId}`);
-    
+
     // Format the plan with proper IDs and initial status
     const searchPlan: SearchPlan = {
       query,
@@ -172,7 +185,7 @@ async function createSearchPlan(query: string, orchestratorModel: AIModel): Prom
       complexity: planObject.complexity,
       createdAt: planId,
     };
-    
+
     // Log the plan details to verify consistency
     console.log(`[DEEP SEARCH] Created new plan with ID ${searchPlan.createdAt}`);
     console.log(`[DEEP SEARCH] First step ID: ${searchPlan.steps[0].id}`);
@@ -180,69 +193,88 @@ async function createSearchPlan(query: string, orchestratorModel: AIModel): Prom
     return searchPlan;
   } catch (error) {
     console.error('[DEEP SEARCH] Plan creation error:', error);
-    throw new Error(`Failed to create search plan: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to create search plan: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
 // Function to execute each step in the search plan using the worker model
-export async function executeSearchPlan(plan: SearchPlan, workerModel: AIModel): Promise<SearchPlan> {
+export async function executeSearchPlan(
+  plan: SearchPlan,
+  workerModel: AIModel,
+): Promise<SearchPlan> {
   try {
     // Make sure we have a valid plan ID before proceeding
     if (!plan.createdAt) {
       throw new Error('Invalid plan: missing createdAt timestamp');
     }
-    
-    console.log(`[DEEP SEARCH] Starting execution of plan with ID ${plan.createdAt} and ${plan.steps.length} steps`);
+
+    console.log(
+      `[DEEP SEARCH] Starting execution of plan with ID ${plan.createdAt} and ${plan.steps.length} steps`,
+    );
     console.log(`[DEEP SEARCH] Using worker model:`, workerModel);
-    
+
     // Create a COPY of the plan to work with to avoid reference issues
     const workingPlan = JSON.parse(JSON.stringify(plan));
-    
+
     // IMPORTANT: Verify the plan exists in the map before execution
     const existingPlan = searchPlans.get(workingPlan.createdAt);
     if (!existingPlan) {
-      console.error(`[DEEP SEARCH] Plan with ID ${workingPlan.createdAt} not found in map before execution`);
+      console.error(
+        `[DEEP SEARCH] Plan with ID ${workingPlan.createdAt} not found in map before execution`,
+      );
       // Store it now to make sure it exists
       updateSearchPlan(workingPlan.createdAt, workingPlan);
     } else {
-      console.log(`[DEEP SEARCH] Verified plan ${workingPlan.createdAt} exists in map before execution`);
+      console.log(
+        `[DEEP SEARCH] Verified plan ${workingPlan.createdAt} exists in map before execution`,
+      );
     }
-    
+
     // Log the initial plan step IDs to ensure we're working with the right IDs
     console.log(`[DEEP SEARCH] Plan ID being executed: ${workingPlan.createdAt}`);
-    console.log(`[DEEP SEARCH] Initial step IDs: ${workingPlan.steps.map((s: PlanStep) => s.id).join(', ')}`);
-    
+    console.log(
+      `[DEEP SEARCH] Initial step IDs: ${workingPlan.steps.map((s: PlanStep) => s.id).join(', ')}`,
+    );
+
     // Execute each step sequentially
     for (let i = 0; i < workingPlan.steps.length; i++) {
       const step = workingPlan.steps[i];
-      
+
       try {
         // Update step status to running
         step.status = 'running';
-        console.log(`[DEEP SEARCH] Executing step ${i+1}/${workingPlan.steps.length}: "${step.description}" - ID: ${step.id} - Status: ${step.status}`);
-        
+        console.log(
+          `[DEEP SEARCH] Executing step ${i + 1}/${workingPlan.steps.length}: "${
+            step.description
+          }" - ID: ${step.id} - Status: ${step.status}`,
+        );
+
         // Create a fresh copy of the working plan to avoid reference issues
         const updatedPlanCopy = JSON.parse(JSON.stringify(workingPlan));
-        
+
         // Update the searchPlans map immediately using our safe update function
         updateSearchPlan(workingPlan.createdAt, updatedPlanCopy);
-        
+
         // Verify update was successful by retrieving plan and checking status
         const currentPlan = getSearchPlan(workingPlan.createdAt);
         if (currentPlan) {
           const stepStatus = currentPlan.steps[i].status;
           console.log(`[DEEP SEARCH] Verified step "${step.id}" status is now: ${stepStatus}`);
-          
+
           // If status doesn't match what we set, something is wrong with updates
           if (stepStatus !== 'running') {
-            console.error(`[DEEP SEARCH] Status verification failed! Expected 'running' but got '${stepStatus}'`);
+            console.error(
+              `[DEEP SEARCH] Status verification failed! Expected 'running' but got '${stepStatus}'`,
+            );
           }
         } else {
           console.error(`[DEEP SEARCH] Plan not found after update! ID: ${workingPlan.createdAt}`);
         }
-        
+
         // Simulate a small delay to demonstrate status changes in UI
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         // Worker: Execute the current step
         const { object: stepResult } = await generateObject({
@@ -263,42 +295,50 @@ export async function executeSearchPlan(plan: SearchPlan, workerModel: AIModel):
         // Update step with the result and change status to completed
         step.status = 'completed';
         step.output = stepResult.explanation;
-        console.log(`[DEEP SEARCH] Step completed: "${step.description}" - ID: ${step.id} - Status: ${step.status}`);
-        
+        console.log(
+          `[DEEP SEARCH] Step completed: "${step.description}" - ID: ${step.id} - Status: ${step.status}`,
+        );
+
         // Create another fresh copy after updating the step
         const completedPlanCopy = JSON.parse(JSON.stringify(workingPlan));
-        
+
         // Update the plan in the global map using our safe update function
         updateSearchPlan(workingPlan.createdAt, completedPlanCopy);
-        
+
         // Verify update was successful
         const updatedPlan = getSearchPlan(workingPlan.createdAt);
         if (updatedPlan) {
           const stepStatus = updatedPlan.steps[i].status;
           console.log(`[DEEP SEARCH] Verified step "${step.id}" status is now: ${stepStatus}`);
-          
+
           // If status doesn't match what we set, something is wrong with updates
           if (stepStatus !== 'completed') {
-            console.error(`[DEEP SEARCH] Status verification failed! Expected 'completed' but got '${stepStatus}'`);
+            console.error(
+              `[DEEP SEARCH] Status verification failed! Expected 'completed' but got '${stepStatus}'`,
+            );
           }
         } else {
-          console.error(`[DEEP SEARCH] Plan not found after completion update! ID: ${workingPlan.createdAt}`);
+          console.error(
+            `[DEEP SEARCH] Plan not found after completion update! ID: ${workingPlan.createdAt}`,
+          );
         }
-        
+
         // Simulate a slight delay between steps
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (err) {
         // Update step with error
         step.status = 'error';
         step.error = err instanceof Error ? err.message : String(err);
-        console.error(`[DEEP SEARCH] Step error for "${step.description}": ${step.error} - Status: ${step.status}`);
-        
+        console.error(
+          `[DEEP SEARCH] Step error for "${step.description}": ${step.error} - Status: ${step.status}`,
+        );
+
         // Create a fresh copy for the error update
         const errorPlanCopy = JSON.parse(JSON.stringify(workingPlan));
-        
+
         // Update the plan in the global map
         updateSearchPlan(workingPlan.createdAt, errorPlanCopy);
-        
+
         // Verify error update was successful
         const errorPlan = getSearchPlan(workingPlan.createdAt);
         if (errorPlan) {
@@ -313,30 +353,34 @@ export async function executeSearchPlan(plan: SearchPlan, workerModel: AIModel):
     if (!finalPlan) {
       throw new Error('Plan not found after execution');
     }
-    
-    console.log(`[DEEP SEARCH] Plan execution completed with final statuses:`, 
-      finalPlan.steps.map((s: PlanStep) => ({ id: s.id, status: s.status })));
-    
+
+    console.log(
+      `[DEEP SEARCH] Plan execution completed with final statuses:`,
+      finalPlan.steps.map((s: PlanStep) => ({ id: s.id, status: s.status })),
+    );
+
     // Generate a summary of all findings after execution completes
     try {
       console.log(`[DEEP SEARCH] Generating summary for plan ${finalPlan.createdAt}`);
-      
+
       // Collect all step outputs to include in summary generation
       const stepOutputs = finalPlan.steps
-        .map(step => ({
+        .map((step) => ({
           description: step.description,
           status: step.status,
-          output: step.output || "",
-          error: step.error
+          output: step.output || '',
+          error: step.error,
         }))
-        .filter(step => step.status === 'completed' || step.status === 'error');
-      
+        .filter((step) => step.status === 'completed' || step.status === 'error');
+
       // Only generate a summary if we have at least one completed step
-      if (stepOutputs.some(step => step.status === 'completed')) {
+      if (stepOutputs.some((step) => step.status === 'completed')) {
         const { object: summaryResult } = await generateObject({
           model: workerModel,
           schema: z.object({
-            summary: z.string().describe('A comprehensive summary of all the findings from the search steps'),
+            summary: z
+              .string()
+              .describe('A comprehensive summary of all the findings from the search steps'),
           }),
           system:
             'You are an expert at summarizing complex search findings into concise, actionable insights.',
@@ -345,39 +389,50 @@ export async function executeSearchPlan(plan: SearchPlan, workerModel: AIModel):
           Original Query: "${finalPlan.query}"
           
           Step Results:
-          ${stepOutputs.map((step, i) => 
-            `Step ${i+1}: ${step.description}
+          ${stepOutputs
+            .map(
+              (step, i) =>
+                `Step ${i + 1}: ${step.description}
             Status: ${step.status}
-            ${step.status === 'completed' ? `Output: ${step.output}` : `Error: ${step.error}`}`
-          ).join('\n\n')}
+            ${step.status === 'completed' ? `Output: ${step.output}` : `Error: ${step.error}`}`,
+            )
+            .join('\n\n')}
           
           Create a well-structured summary that synthesizes the key findings from all steps, highlighting the most important insights that answer the original query.`,
         });
-        
-        console.log(`[DEEP SEARCH] Summary generated for plan ${finalPlan.createdAt}: ${finalPlan.summary}`);
-        
+
+        console.log(
+          `[DEEP SEARCH] Summary generated for plan ${finalPlan.createdAt}: ${finalPlan.summary}`,
+        );
+
         // Update the plan with the generated summary
         finalPlan.summary = summaryResult.summary;
 
-        
         // Update the plan in the global map with the summary
         updateSearchPlan(finalPlan.createdAt, finalPlan);
-        
+
         console.log(`[DEEP SEARCH] Summary generated for plan ${finalPlan.createdAt}`);
       } else {
-        console.log(`[DEEP SEARCH] No completed steps available to generate summary for plan ${finalPlan.createdAt}`);
-        finalPlan.summary = "Unable to generate summary as no search steps were completed successfully.";
+        console.log(
+          `[DEEP SEARCH] No completed steps available to generate summary for plan ${finalPlan.createdAt}`,
+        );
+        finalPlan.summary =
+          'Unable to generate summary as no search steps were completed successfully.';
         updateSearchPlan(finalPlan.createdAt, finalPlan);
       }
     } catch (summaryError) {
       console.error(`[DEEP SEARCH] Error generating summary:`, summaryError);
-      finalPlan.summary = `Error generating summary: ${summaryError instanceof Error ? summaryError.message : String(summaryError)}`;
+      finalPlan.summary = `Error generating summary: ${
+        summaryError instanceof Error ? summaryError.message : String(summaryError)
+      }`;
       updateSearchPlan(finalPlan.createdAt, finalPlan);
     }
-      
+
     return finalPlan;
   } catch (error) {
     console.error('[DEEP SEARCH] Plan execution error:', error);
-    throw new Error(`Failed to execute search plan: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to execute search plan: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
-} 
+}

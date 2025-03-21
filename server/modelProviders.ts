@@ -35,14 +35,14 @@ export const modelProviders: ModelProvider[] = [
     name: 'GPT-4o Mini (OpenAI)',
     available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
     model: openai('gpt-4o-mini'),
-    defaultSystemPrompt
+    defaultSystemPrompt,
   },
   {
     id: 'gpt-4o',
-      name: 'GPT-4o (OpenAI)',
+    name: 'GPT-4o (OpenAI)',
     available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
     model: openai('gpt-4o'),
-    defaultSystemPrompt
+    defaultSystemPrompt,
   },
   // {
   //   id: 'o3-mini',
@@ -56,28 +56,28 @@ export const modelProviders: ModelProvider[] = [
     name: 'Claude 3.5 Sonnet (Anthropic)',
     available: checkApiKey(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC'),
     model: anthropic('claude-3-5-sonnet-latest'),
-    defaultSystemPrompt
+    defaultSystemPrompt,
   },
   {
     id: 'claude-3-7-sonnet',
     name: 'Claude 3.7 Sonnet (Anthropic)',
     available: checkApiKey(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC'),
     model: anthropic('claude-3-7-sonnet-latest'),
-    defaultSystemPrompt
+    defaultSystemPrompt,
   },
   {
     id: 'groq-llama-3-8b-8192',
     name: 'Llama 3.8B (Groq)',
     available: checkApiKey(process.env.GROQ_API_KEY, 'GROQ'),
     model: groq('llama3-8b-8192'),
-    defaultSystemPrompt
+    defaultSystemPrompt,
   },
   {
     id: 'groq-qwen-2.5-32b',
     name: 'Qwen 2.5 32B (Groq)',
     available: checkApiKey(process.env.GROQ_API_KEY, 'GROQ'),
     model: groq('qwen-2.5-32b'),
-    defaultSystemPrompt
+    defaultSystemPrompt,
   },
   // {
   //   id: 'groq-qwen-32b-instruct',
@@ -91,7 +91,7 @@ export const modelProviders: ModelProvider[] = [
     name: 'Gemma 2 9B (Groq)',
     available: checkApiKey(process.env.GROQ_API_KEY, 'GROQ'),
     model: groq('gemma2-9b-it'),
-    defaultSystemPrompt
+    defaultSystemPrompt,
   },
   // {
   //   id: 'deepseek-r1-distill-llama-70b',
@@ -105,21 +105,22 @@ export const modelProviders: ModelProvider[] = [
     name: 'DeepSeek Chat (DeepSeek)',
     available: checkApiKey(process.env.DEEPSEEK_API_KEY, 'DEEPSEEK'),
     model: deepseek('deepseek-chat'),
-    defaultSystemPrompt: 'You are a helpful AI assistant powered by DeepSeek. You can help with getting information about weather and location, and telling the current time.',
+    defaultSystemPrompt:
+      'You are a helpful AI assistant powered by DeepSeek. You can help with getting information about weather and location, and telling the current time.',
   },
   {
     id: 'cerebras-llama-3-3-70b',
     name: 'Llama 3.3 70B (Cerebras)',
     available: checkApiKey(process.env.CEREBRAS_API_KEY, 'CEREBRAS'),
     model: cerebras('llama-3.3-70b'),
-    defaultSystemPrompt
+    defaultSystemPrompt,
   },
   {
     id: 'gemini-flash',
     name: 'Gemini 2.0 Flash (Google)',
     available: checkApiKey(process.env.GOOGLE_GENERATIVE_AI_API_KEY, 'GEMINI'),
     model: google('gemini-2.0-flash'),
-    defaultSystemPrompt
+    defaultSystemPrompt,
   },
   // {
   //   id: 'gemini-vertex',
@@ -131,9 +132,9 @@ export const modelProviders: ModelProvider[] = [
 ];
 
 export function getModelProviderById(id: string): ModelProvider | undefined {
-  return modelProviders.find(provider => provider.id === id);
+  return modelProviders.find((provider) => provider.id === id);
 }
 
 export function getAvailableModelProviders(): ModelProvider[] {
-  return modelProviders.filter(provider => provider.available);
+  return modelProviders.filter((provider) => provider.available);
 }

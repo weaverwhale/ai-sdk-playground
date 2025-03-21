@@ -19,7 +19,7 @@ export function useServerMonitoring(): ServerMonitoringResult {
     try {
       const response = await fetch('/api/health');
       await response.json();
-      
+
       setServerStatus('online');
       setServerInfo(`Server is online (as of ${new Date().toLocaleTimeString()})`);
     } catch {
@@ -34,7 +34,7 @@ export function useServerMonitoring(): ServerMonitoringResult {
     let retryCount = 0;
     const maxRetries = 5;
     const retryDelay = 1500;
-    
+
     const doServerCheck = async () => {
       try {
         await checkServerHealth();
@@ -48,18 +48,20 @@ export function useServerMonitoring(): ServerMonitoringResult {
           setTimeout(doServerCheck, retryDelay);
         } else {
           setServerStatus('offline');
-          setServerInfo('Could not connect to the server after multiple attempts. Please check if the server is running.');
+          setServerInfo(
+            'Could not connect to the server after multiple attempts. Please check if the server is running.',
+          );
           setErrorDetails('Server connection failed after multiple attempts.');
         }
       }
     };
 
     doServerCheck();
-    
+
     const intervalId = setInterval(() => {
       checkServerHealth(); // Only check health status in interval, not models
     }, 30000);
-    
+
     return () => clearInterval(intervalId);
   }, [serverStatus, fetchModels]);
 
@@ -79,6 +81,6 @@ export function useServerMonitoring(): ServerMonitoringResult {
     availableModels,
     selectedModel,
     setSelectedModel,
-    retryConnection
+    retryConnection,
   };
 }

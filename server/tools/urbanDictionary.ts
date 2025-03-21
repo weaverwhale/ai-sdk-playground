@@ -11,9 +11,7 @@ const urbanDictionary = {
   name: 'Urban Dictionary',
   description: 'Useful for looking up slang definitions and internet culture terms',
   parameters: z.object({
-    term: z
-      .string()
-      .describe('The term to look up'),
+    term: z.string().describe('The term to look up'),
   }),
   execute: async ({ term }: UrbanDictionaryParams) => {
     console.log('Searching for term:', term);
@@ -66,4 +64,4 @@ const urbanDictionary = {
   },
 };
 
-export { urbanDictionary }; 
+export { urbanDictionary };

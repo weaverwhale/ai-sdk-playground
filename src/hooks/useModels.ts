@@ -12,12 +12,14 @@ interface UseModelsResult {
 export function useModels(): UseModelsResult {
   const [availableModels, setAvailableModels] = useState<Model[]>([]);
   const [modelError, setModelError] = useState<string | null>(null);
-  
+
   // Use useMemo for initial model selection from localStorage
   const initialModel = useMemo(() => {
-    return typeof window !== 'undefined' ? localStorage.getItem('selectedModel') || 'openai' : 'openai';
+    return typeof window !== 'undefined'
+      ? localStorage.getItem('selectedModel') || 'openai'
+      : 'openai';
   }, []);
-  
+
   const [selectedModel, setSelectedModel] = useState<string>(initialModel);
 
   // Update localStorage when selected model changes
@@ -31,14 +33,16 @@ export function useModels(): UseModelsResult {
     try {
       const modelsResponse = await fetch('/api/models');
       const modelsData = await modelsResponse.json();
-      
+
       if (modelsData && Array.isArray(modelsData.models)) {
         setAvailableModels(modelsData.models);
-        
+
         if (modelsData.models.length === 0) {
           setModelError('No AI models are available. Please check your API keys.');
-        }
-        else if (modelsData.models.length > 0 && (!selectedModel || !modelsData.models.find((m: Model) => m.id === selectedModel))) {
+        } else if (
+          modelsData.models.length > 0 &&
+          (!selectedModel || !modelsData.models.find((m: Model) => m.id === selectedModel))
+        ) {
           setSelectedModel(modelsData.models[0].id);
           setModelError(null);
         } else {
@@ -57,6 +61,6 @@ export function useModels(): UseModelsResult {
     selectedModel,
     setSelectedModel,
     fetchModels,
-    modelError
+    modelError,
   };
-} 
+}

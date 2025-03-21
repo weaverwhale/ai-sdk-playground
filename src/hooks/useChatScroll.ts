@@ -8,7 +8,7 @@ import { useRef, useCallback, useEffect } from 'react';
 export function useChatScroll(chatStatus: string) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
@@ -17,14 +17,15 @@ export function useChatScroll(chatStatus: string) {
   useEffect(() => {
     // Initial scroll when status changes
     scrollToBottom();
-    
+
     // Set up mutation observer to detect content streaming and scroll as it comes in
     if (!chatContainerRef.current) return;
 
     const observer = new MutationObserver(() => {
       const container = chatContainerRef.current!;
-      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-      
+      const isNearBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+
       if (isNearBottom || chatStatus === 'submitted' || chatStatus === 'streaming') {
         scrollToBottom();
       }
@@ -33,7 +34,7 @@ export function useChatScroll(chatStatus: string) {
     observer.observe(chatContainerRef.current, {
       childList: true,
       subtree: true,
-      characterData: true
+      characterData: true,
     });
 
     return () => {
@@ -42,4 +43,4 @@ export function useChatScroll(chatStatus: string) {
   }, [chatStatus, scrollToBottom]);
 
   return { messagesEndRef, chatContainerRef, scrollToBottom };
-} 
+}
