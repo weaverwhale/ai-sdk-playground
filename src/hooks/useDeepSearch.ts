@@ -340,8 +340,6 @@ export function useDeepSearch({
 
         // Notify parent component
         if (plan) {
-          // Pause briefly to ensure the loading state is visible
-          await new Promise((resolve) => setTimeout(resolve, 500));
           onPlanCreated?.(plan);
         }
 
@@ -351,8 +349,6 @@ export function useDeepSearch({
         setError(error);
         return null;
       } finally {
-        // Small delay to ensure the loading indicator is visible for a minimum time
-        await new Promise((resolve) => setTimeout(resolve, 300));
         setIsCreatingPlan(false);
       }
     },

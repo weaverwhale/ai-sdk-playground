@@ -215,15 +215,7 @@ export function useChatbotMessages({
   }, []);
 
   // Create a new instance of the useChat hook for each conversation
-  const {
-    messages,
-    input,
-    setInput,
-    handleSubmit,
-    status,
-    error,
-    reload: originalReload,
-  } = useChat({
+  const { messages, input, setInput, handleSubmit, status, error } = useChat({
     api: '/api/chat',
     maxSteps: 5,
     id: conversationId,
@@ -231,20 +223,6 @@ export function useChatbotMessages({
     onError: handleChatError,
     onToolCall: handleToolCall,
   });
-
-  // Custom reload function that prevents infinite loops
-  const reload = useCallback(() => {
-    if (isReloadingRef.current) return;
-
-    isReloadingRef.current = true;
-    try {
-      originalReload();
-    } finally {
-      setTimeout(() => {
-        isReloadingRef.current = false;
-      }, 100);
-    }
-  }, [originalReload]);
 
   // Chat scrolling
   const { messagesEndRef, chatContainerRef } = useChatScroll(status);
@@ -436,14 +414,10 @@ export function useChatbotMessages({
   }, [selectedModel, messages.length, resetInternalState]);
 
   // Event handlers with useCallback
-  const handleRetry = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      setErrorDetails(null);
-      reload();
-    },
-    [reload],
-  );
+  const handleRetry = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setErrorDetails(null);
+  }, []);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -467,9 +441,7 @@ export function useChatbotMessages({
 
           // Place cursor at the end of input
           const inputElement = event.target as HTMLInputElement;
-          setTimeout(() => {
-            inputElement.selectionStart = inputElement.selectionEnd = inputElement.value.length;
-          }, 0);
+          inputElement.selectionStart = inputElement.selectionEnd = inputElement.value.length;
         }
       }
 
@@ -618,7 +590,6 @@ export function useChatbotMessages({
     onFinalResponse: hasAddedFinalResponseRef.current,
     messagesEndRef,
     chatContainerRef,
-    reload: reload,
     clearConversation,
     searchPlan: chatState.searchPlan,
     isDeepSearchMode,

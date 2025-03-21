@@ -79,7 +79,6 @@ export interface UseChatbotMessagesResult {
   onFinalResponse: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   chatContainerRef: React.RefObject<HTMLDivElement | null>;
-  reload: () => void;
   clearConversation: () => void;
   searchPlan?: SearchPlan;
   isDeepSearchMode: boolean;

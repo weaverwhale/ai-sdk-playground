@@ -268,9 +268,6 @@ export async function executeSearchPlan(
           console.error(`[DEEP SEARCH] Plan not found after update! ID: ${workingPlan.createdAt}`);
         }
 
-        // Simulate a small delay to demonstrate status changes in UI
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
         // Worker: Execute the current step
         const { object: stepResult } = await generateObject({
           model: workerModel,
@@ -317,9 +314,6 @@ export async function executeSearchPlan(
             `[DEEP SEARCH] Plan not found after completion update! ID: ${workingPlan.createdAt}`,
           );
         }
-
-        // Simulate a slight delay between steps
-        await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (err) {
         // Update step with error
         step.status = 'error';
