@@ -37,9 +37,29 @@ export interface Model {
   name: string;
 }
 
+export type PlanStepStatus = 'pending' | 'running' | 'completed' | 'error';
+
+export interface PlanStep {
+  id: string;
+  description: string;
+  status: PlanStepStatus;
+  output?: string;
+  error?: string;
+}
+
+export interface SearchPlan {
+  createdAt: string;
+  query: string;
+  complexity: "low" | "medium" | "high";
+  steps: PlanStep[];
+  conversationTurn?: number;
+  summary?: string;
+}
+
 // Chat hook props and result types
 export interface UseChatbotMessagesProps {
   selectedModel: string;
+  isDeepSearchMode?: boolean;
 }
 
 export interface UseChatbotMessagesResult {
@@ -61,6 +81,9 @@ export interface UseChatbotMessagesResult {
   chatContainerRef: React.RefObject<HTMLDivElement | null>;
   reload: () => void;
   clearConversation: () => void;
+  searchPlan?: SearchPlan;
+  isDeepSearchMode: boolean;
+  isCreatingPlan: boolean;
 }
 
 // Server monitoring hook result type
@@ -80,17 +103,25 @@ export type ChatAction =
   | { type: 'SET_CHAT_MESSAGES'; payload: ChatMessage[] }
   | { type: 'ADD_USER_MESSAGE'; payload: string }
   | { type: 'ADD_ASSISTANT_MESSAGE'; payload: { content: string; conversationTurn: number } }
+  | { type: 'UPDATE_ASSISTANT_MESSAGE'; payload: { content: string; conversationTurn: number } }
   | { type: 'ADD_TOOL_CALL'; payload: { toolCall: ToolCall; conversationTurn: number } }
   | { type: 'UPDATE_TOOL_CALL'; payload: { toolCallId: string; status: 'completed' | 'error'; output?: string } }
   | { type: 'ADD_FINAL_RESPONSE'; payload: { content: string; conversationTurn: number } }
   | { type: 'UPDATE_FINAL_RESPONSE'; payload: { content: string; conversationTurn: number } }
-  | { type: 'INCREMENT_CONVERSATION_TURN' };
+  | { type: 'INCREMENT_CONVERSATION_TURN' }
+  | { type: 'SET_SEARCH_PLAN'; plan: SearchPlan; conversationTurn: number }
+  | { type: 'UPDATE_PLAN_STEP'; payload: { stepId: string; status: PlanStepStatus; output?: string; error?: string } }
+  | { type: 'UPDATE_SEARCH_PLAN'; plan: SearchPlan; conversationTurn: number }
+  | { type: 'MARK_PLAN_STEPS_ERROR'; error: string; conversationTurn: number }
+  | { type: 'SET_IS_CREATING_PLAN'; isCreatingPlan: boolean };
 
 // State for our chat reducer
 export interface ChatState {
   chatMessages: ChatMessage[];
   currentConversationTurn: number;
   toolExecutionMsgMap: Map<string, number>;
+  searchPlan?: SearchPlan;
+  isCreatingPlan?: boolean;
 }
 
 // Component props types
@@ -122,4 +153,15 @@ export interface ChatMessagesProps {
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   chatContainerRef: React.RefObject<HTMLDivElement | null>;
   handleRetry: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  searchPlan?: SearchPlan;
+  isDeepSearchMode: boolean;
+  isCreatingPlan: boolean;
+}
+
+export interface SearchPlanProps {
+  plan: SearchPlan;
+}
+
+export interface SearchPlanStepProps {
+  step: PlanStep;
 } 

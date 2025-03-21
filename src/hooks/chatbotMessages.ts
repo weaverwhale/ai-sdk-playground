@@ -10,8 +10,12 @@ import {
 import { chatReducer } from './chatReducer';
 import { useToolOptions } from './useToolOptions';
 import { useChatScroll } from './useChatScroll';
+import { useDeepSearch } from './useDeepSearch';
 
-export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): UseChatbotMessagesResult {
+export function useChatbotMessages({ 
+  selectedModel,
+  isDeepSearchMode = false
+}: UseChatbotMessagesProps): UseChatbotMessagesResult {
   // Use our custom hooks
   const toolOptions = useToolOptions();
   
@@ -29,7 +33,33 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
   });
   
   // Extract values from state
-  const { chatMessages } = chatState;
+  const { chatMessages, searchPlan } = chatState;
+  
+  // Set up deep search hook
+  const { 
+    createDeepSearchPlan,
+    executeDeepSearchPlan,
+    isCreatingPlan,
+    isExecutingPlan,
+    error: deepSearchError
+  } = useDeepSearch({
+    enabled: isDeepSearchMode,
+    onPlanCreated: (plan) => {
+      console.log('[DEEP SEARCH] Plan created, updating UI:', plan);
+      dispatch({ 
+        type: 'SET_SEARCH_PLAN', 
+        plan: plan, 
+        conversationTurn: chatState.currentConversationTurn 
+      });
+    },
+    onStepUpdate: (stepId, status, output, error) => {
+      console.log(`[DEEP SEARCH] Step update: ${stepId} -> ${status}`);
+      dispatch({ 
+        type: 'UPDATE_PLAN_STEP', 
+        payload: { stepId, status, output, error } 
+      });
+    }
+  });
   
   // Refs
   const isProcessingTool = useRef(false);
@@ -56,7 +86,25 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
   const handleToolCall = useCallback(({ toolCall }: ToolCallHandlerArg) => {
     isProcessingTool.current = true;
     hasAddedFinalResponseRef.current = false;
-    toolCallResponseRef.current = "";
+    
+    // We need to create a references to 'messages' that will be available in different scopes,
+    // so we access the messages from the chatMessages state.
+    let currentStreamContent = "";
+    
+    // Use the chatMessages array to find current content
+    // Find the most recent assistant message in the current conversation turn
+    const currentAssistantMsg = chatMessages.find(
+      (m: ChatMessage) => 
+        m.role === 'assistant' && 
+        !m.toolCalls?.length &&
+        m.conversationTurn === chatState.currentConversationTurn
+    );
+    
+    if (currentAssistantMsg) {
+      currentStreamContent = currentAssistantMsg.content;
+    }
+    
+    toolCallResponseRef.current = currentStreamContent;
     
     // Get the tool information
     const toolInfo = toolOptions[toolCall?.toolName || ''] || {
@@ -75,6 +123,28 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
       id: `${Date.now()}-${toolCall?.toolName || 'tool'}-${Math.random().toString(36).substr(2, 5)}`
     };
     
+    // First, if we have any streamed content, make sure it's displayed
+    if (currentStreamContent) {
+      const existingMessage = chatMessages.find(
+        (m: ChatMessage) => 
+          m.role === 'assistant' && 
+          !m.isFinalResponse && 
+          !m.toolCalls?.length &&
+          m.conversationTurn === chatState.currentConversationTurn
+      );
+      
+      if (!existingMessage) {
+        // Add the pre-tool content as a message
+        dispatch({
+          type: 'ADD_ASSISTANT_MESSAGE',
+          payload: {
+            content: currentStreamContent,
+            conversationTurn: chatState.currentConversationTurn
+          }
+        });
+      }
+    }
+    
     // Add the tool call message - the reducer will handle storing the index
     dispatch({ 
       type: 'ADD_TOOL_CALL', 
@@ -86,7 +156,7 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     
     // Save the current tool call for reference
     lastToolCallRef.current = newToolCall;
-  }, [toolOptions, chatState.currentConversationTurn]);
+  }, [toolOptions, chatState.currentConversationTurn, chatMessages, dispatch]);
   
   // Error handler for chat - must be defined before useChat
   const handleChatError = useCallback((error: unknown) => {
@@ -199,6 +269,7 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     
     // Process different assistant response scenarios
     if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content) {
+      // Check for pending tool call
       if (lastToolCallRef.current && !lastToolCallRef.current.output) {
         // Case 1: Processing tool response
         toolCallResponseRef.current = lastMsg.content;
@@ -216,10 +287,13 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
           
           // Add placeholder for final response if not already added
           if (!hasAddedFinalResponseRef.current) {
+            // Create or update the assistant message with pre-tool content and final content
+            const combinedContent = lastMsg.content;
+            
             dispatch({
               type: 'ADD_FINAL_RESPONSE',
               payload: {
-                content: '',
+                content: combinedContent,
                 conversationTurn: chatState.currentConversationTurn
               }
             });
@@ -227,8 +301,38 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
           
           lastToolCallRef.current = null;
         }
-      } else if (!lastToolCallRef.current && !toolCallResponseRef.current) {
-        // Case 2: Regular assistant message (non-tool response)
+      } else if (!lastToolCallRef.current && !toolCallResponseRef.current && status === 'streaming') {
+        // Case 2: Regular assistant message (non-tool response) during streaming
+        // Check if we have an existing message for this turn
+        const existingMessage = chatMessages.find(
+          (m: ChatMessage) => 
+            m.role === 'assistant' && 
+            !m.isFinalResponse && 
+            !m.toolCalls?.length &&
+            m.conversationTurn === chatState.currentConversationTurn
+        );
+        
+        if (existingMessage) {
+          // Update existing message
+          dispatch({
+            type: 'UPDATE_ASSISTANT_MESSAGE',
+            payload: {
+              content: lastMsg.content,
+              conversationTurn: chatState.currentConversationTurn
+            }
+          });
+        } else {
+          // Create new message
+          dispatch({
+            type: 'ADD_ASSISTANT_MESSAGE',
+            payload: {
+              content: lastMsg.content,
+              conversationTurn: chatState.currentConversationTurn
+            }
+          });
+        }
+      } else if (!lastToolCallRef.current && !toolCallResponseRef.current && status === 'ready') {
+        // Case 2.5: Regular assistant message (non-tool response) when complete
         dispatch({
           type: 'ADD_ASSISTANT_MESSAGE',
           payload: {
@@ -356,14 +460,58 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     }
   }, [historyIndex, messages, setInput]);
   
+  // Modified to handle deep search if enabled
   const handleManualSubmit = useCallback(async (e: React.FormEvent) => {
-    if(status === 'submitted' || status === 'streaming') {
+    if(status === 'submitted' || status === 'streaming' || isCreatingPlan || isExecutingPlan) {
       return;
     }
     
     e.preventDefault();
     setErrorDetails(null);
     setHistoryIndex(null); // Reset history index after sending a message
+    
+    const query = input.trim();
+    
+    // Check if deep search mode is enabled
+    if (isDeepSearchMode && query) {
+      // First add the user message
+      dispatch({ 
+        type: 'ADD_USER_MESSAGE',
+        payload: query
+      });
+      
+      // Increment conversation turn
+      dispatch({ 
+        type: 'INCREMENT_CONVERSATION_TURN'
+      });
+      
+      try {
+        // Clear input immediately after submitting
+        setInput('');
+        
+        // Create a deep search plan with the orchestrator
+        const plan = await createDeepSearchPlan(query);
+        
+        if (plan) {
+          // Store the current conversation turn in the plan for reference
+          const planWithTurn = {
+            ...plan,
+            conversationTurn: chatState.currentConversationTurn
+          };
+          
+          // Execute the plan with workers
+          await executeDeepSearchPlan(planWithTurn);
+        }
+      } catch (err) {
+        console.error('Deep search error:', err);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setErrorDetails(errorMsg);
+      }
+      
+      return;
+    }
+    
+    // Regular chat mode
     hasAddedFinalResponseRef.current = false;
     toolCallResponseRef.current = "";
     
@@ -377,7 +525,7 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     } catch {
       // Error handled by onError callback
     }
-  }, [handleSubmit, status]);
+  }, [status, isCreatingPlan, isExecutingPlan, input, isDeepSearchMode, setInput, createDeepSearchPlan, executeDeepSearchPlan, chatState.currentConversationTurn, handleSubmit, dispatch]);
   
   const toggleToolExpansion = useCallback((messageIdx: number, toolIdx: number) => {
     const key = `${messageIdx}-${toolIdx}`;
@@ -398,13 +546,18 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     setHistoryIndex(null);
   }, [resetInternalState]);
 
+  // Combine errors
+  const combinedErrorDetails = deepSearchError 
+    ? (deepSearchError.message || String(deepSearchError)) 
+    : errorDetails;
+
   return {
     chatMessages,
     input,
     setInput,
     status,
     error,
-    errorDetails,
+    errorDetails: combinedErrorDetails,
     expandedTools,
     toolOptions,
     historyIndex,
@@ -412,10 +565,13 @@ export function useChatbotMessages({ selectedModel }: UseChatbotMessagesProps): 
     handleRetry,
     handleKeyDown,
     toggleToolExpansion,
-    onFinalResponse,
+    onFinalResponse: hasAddedFinalResponseRef.current,
     messagesEndRef,
     chatContainerRef,
-    reload,
-    clearConversation
+    reload: reload,
+    clearConversation,
+    searchPlan: chatState.searchPlan,
+    isDeepSearchMode,
+    isCreatingPlan
   };
 }

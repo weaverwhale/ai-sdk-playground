@@ -1,8 +1,9 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import MermaidDiagram from '../MermaidDiagram';
+import SearchPlanDisplay from '../SearchPlanDisplay';
 import type { Components } from 'react-markdown';
 import { useChatbotMessages } from '../../hooks/chatbotMessages';
 import { useServerMonitoring } from '../../hooks/serverMonitoring';
@@ -13,6 +14,7 @@ import {
 } from '../../types/chatTypes';
 
 import './index.css';
+import '../SearchPlanDisplay.css';
 
 // Create a more permissive code component for ReactMarkdown
 const CodeBlock: Components['code'] = (props) => {
@@ -108,7 +110,7 @@ const ToolCallsDisplay = memo(({
         const status = toolCall.status || 'completed';
         
         return (
-          <div key={idx} className={`tool-invocation tool-status-${status}`}>
+          <div key={`${messageIndex}-${idx}-${toolCall.id}`} className={`tool-invocation tool-status-${status}`}>
             <div 
               className="tool-header"
               onClick={() => toggleToolExpansion(messageIndex, idx)}
@@ -142,6 +144,12 @@ const ToolCallsDisplay = memo(({
                   <div className="tool-section-label">Arguments:</div>
                   <pre>{JSON.stringify(toolCall.args, null, 2)}</pre>
                 </div>
+                {toolCall.output && (
+                  <div className="tool-output">
+                    <div className="tool-section-label">Output:</div>
+                    <pre>{toolCall.output}</pre>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -165,10 +173,29 @@ const ChatMessages = memo(({
   onFinalResponse,
   messagesEndRef,
   chatContainerRef,
-  handleRetry
+  handleRetry,
+  searchPlan,
+  isDeepSearchMode,
+  isCreatingPlan
 }: ChatMessagesProps) => {
   return (
     <div className="chat-messages" ref={chatContainerRef}>
+      {chatMessages.length === 0 && (
+        <div className="message assistant empty-state">
+          <div className="message-content">
+            <div className="welcome-message">
+              <h3>👋 Welcome to the Chat</h3>
+              <p>Type a message below to get started!</p>
+              <ul>
+                <li>Ask me questions about code or general topics</li>
+                <li>Request help with debugging or explaining concepts</li>
+                <li>I can help you build or improve your projects</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {chatMessages.map((message, index) => (
         <Message
           key={index}
@@ -179,6 +206,29 @@ const ChatMessages = memo(({
           messageIndex={index}
         />
       ))}
+      
+      {/* Display search plan if in deep search mode and plan exists */}
+      {isDeepSearchMode && searchPlan && (
+        <div className="message assistant search-plan-container">
+          <SearchPlanDisplay plan={searchPlan} />
+        </div>
+      )}
+      
+      {/* Show loading indicator when creating plan in deep search mode */}
+      {isDeepSearchMode && isCreatingPlan && !searchPlan && (
+        <div className="message assistant">
+          <div className="message-content">
+            <div className="thinking-animation">
+              <span className="thinking-text">Creating search plan</span>
+              <div className="thinking-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Only show thinking animation if we don't already have a streaming response */}
       {(status === 'submitted') && !onFinalResponse && (
@@ -220,6 +270,9 @@ const ChatMessages = memo(({
 ChatMessages.displayName = 'ChatMessages';
 
 const Chatbot: React.FC = () => {
+  // Deep search mode toggle
+  const [isDeepSearchMode, setIsDeepSearchMode] = useState(false);
+  
   // Use server monitoring hook
   const {
     serverStatus,
@@ -247,11 +300,21 @@ const Chatbot: React.FC = () => {
     onFinalResponse,
     messagesEndRef,
     chatContainerRef,
-    clearConversation
-  } = useChatbotMessages({ selectedModel });
+    clearConversation,
+    searchPlan,
+    isCreatingPlan
+  } = useChatbotMessages({ 
+    selectedModel,
+    isDeepSearchMode 
+  });
 
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedModel(e.target.value);
+  };
+
+  const toggleDeepSearchMode = () => {
+    setIsDeepSearchMode(prev => !prev);
+    clearConversation();
   };
 
   if (serverStatus === 'checking') {
@@ -287,12 +350,13 @@ const Chatbot: React.FC = () => {
       {serverInfo && <div className="server-status">{serverInfo}</div>}
       
       <div className="chat-controls">
-        <div className="model-selector">
+        <div className={`model-selector ${(status === 'submitted' || status === 'streaming' || availableModels.length === 0) ? 'disabled' : ''}`}>
           <select
             id="model-select"
             value={selectedModel}
             onChange={handleModelChange}
             disabled={(status === 'submitted' || status === 'streaming') || availableModels.length === 0}
+            aria-label="Select AI model"
           >
             {availableModels.length === 0 && <option value="">No models available</option>}
             {availableModels.map(model => (
@@ -302,13 +366,32 @@ const Chatbot: React.FC = () => {
             ))}
           </select>
         </div>
-        <button 
-          className="clear-button"
-          onClick={clearConversation}
-          disabled={status === 'submitted' || status === 'streaming' || chatMessages.length === 0}
-        >
-          Clear
-        </button>
+        
+        <div className="chatbot-options">
+          <div className={`search-mode-toggle ${status === 'submitted' || status === 'streaming' ? 'disabled' : ''}`}>
+            <label className="toggle-switch">
+              <input 
+                type="checkbox" 
+                id="deep-search-toggle"
+                checked={isDeepSearchMode} 
+                onChange={toggleDeepSearchMode}
+                disabled={status === 'submitted' || status === 'streaming'}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+            <label htmlFor="deep-search-toggle" className="toggle-label">
+              Deep Search
+            </label>
+          </div>
+          
+          <button 
+            className="clear-button"
+            onClick={clearConversation}
+            disabled={status === 'submitted' || status === 'streaming' || chatMessages.length === 0}
+          >
+            Clear Chat
+          </button>
+        </div>
       </div>
       
       <ChatMessages
@@ -323,6 +406,9 @@ const Chatbot: React.FC = () => {
         messagesEndRef={messagesEndRef}
         chatContainerRef={chatContainerRef}
         handleRetry={handleRetry}
+        searchPlan={searchPlan}
+        isDeepSearchMode={isDeepSearchMode}
+        isCreatingPlan={isCreatingPlan}
       />
       
       <form className="chat-input" onSubmit={handleSubmit}>
@@ -330,7 +416,7 @@ const Chatbot: React.FC = () => {
           value={input}
           onChange={(event) => setInput(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask me anything..."
+          placeholder={isDeepSearchMode ? "Ask a complex question..." : "Ask me anything..."}
           className="input-field"
         />
         <button 
