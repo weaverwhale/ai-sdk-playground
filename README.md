@@ -1,4 +1,4 @@
-# AI SDK Chatbot with Tools
+# AI SDK Chatbot with Tools & Deep Search
 
 A simple chatbot application built with React and the AI SDK that demonstrates using tools to get location information, weather data, and the current time.
 
@@ -10,6 +10,10 @@ A simple chatbot application built with React and the AI SDK that demonstrates u
   - User location
   - Weather information
   - Current time
+- Deep search mode
+- Search plan display
+- Search plan step display
+- Search plan summary display
 
 ## Technologies Used
 
