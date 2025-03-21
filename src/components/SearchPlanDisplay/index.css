@@ -1,8 +1,17 @@
 .search-plan-container {
   width: 100%;
+  height: 40vh;
   max-width: 100% !important;
   border-radius: 0 !important;
   border-bottom: 1px solid #e0e0e0 !important;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .search-plan-container {
+    border-bottom: none !important;
+    height: 100%;
+  }
 }
 
 .search-plan-header {
@@ -118,7 +127,7 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  padding: 4px;
+  padding: 4px 8px;
 }
 
 .step-header:hover {

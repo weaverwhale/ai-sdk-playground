@@ -115,7 +115,9 @@ const ToolCallsDisplay = memo(
                   <>
                     Calling<span className="tool-name-text">{displayName}</span>
                   </>
-                  <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
+                  {status === 'completed' && (
+                    <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
+                  )}
                 </div>
                 <div className="tool-description">{description}</div>
                 {status === 'running' && (
@@ -305,7 +307,7 @@ const Chatbot: React.FC = () => {
 
   if (serverStatus === 'checking') {
     return (
-      <div className="chatbot-container">
+      <div className={`chatbot-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
         <div className="loading-container">
           <div className="loading-spinner"></div>
           <p>Connecting to server...</p>
@@ -316,7 +318,7 @@ const Chatbot: React.FC = () => {
 
   if (serverStatus === 'offline') {
     return (
-      <div className="chatbot-container">
+      <div className={`chatbot-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
         <div className="error-container">
           <h3>Server Connection Error</h3>
           <p>{serverInfo}</p>
@@ -329,7 +331,7 @@ const Chatbot: React.FC = () => {
   }
 
   return (
-    <div className="chatbot-container">
+    <div className={`chatbot-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
       {serverInfo && <div className="server-status">{serverInfo}</div>}
 
       <div className="chat-controls">
@@ -389,7 +391,7 @@ const Chatbot: React.FC = () => {
         </div>
       </div>
 
-      <div className="messages-container">
+      <div className={`messages-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
         <ChatMessages
           chatMessages={chatMessages}
           status={status}

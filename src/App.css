@@ -18,13 +18,7 @@ body {
 }
 
 .app-container {
-  padding: 2rem;
-}
-
-@media (max-width: 768px) {
-  .app-container {
-    padding: 1rem;
-  }
+  padding: 1rem;
 }
 
 h1 {
