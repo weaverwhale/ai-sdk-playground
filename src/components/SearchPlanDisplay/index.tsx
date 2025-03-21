@@ -187,7 +187,7 @@ const SearchPlanDisplay = memo(({ plan, className = '' }: SearchPlanDisplayProps
   const isSearchComplete = pendingSteps === 0 && runningSteps === 0;
 
   return (
-    <div className={`search-plan-container ${className}`}>
+    <div className={`${className}`}>
       <div className="search-plan-header">
         <h3>Deep Search Plan</h3>
         <div className="plan-meta">

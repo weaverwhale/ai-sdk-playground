@@ -14,6 +14,7 @@
   align-items: center;
   margin-bottom: 12px;
   flex-wrap: wrap;
+  text-transform: capitalize;
 }
 
 .search-plan-header h3 {
@@ -120,7 +121,7 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 4px;
 }
 
 .step-header:hover {

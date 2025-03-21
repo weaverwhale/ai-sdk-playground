@@ -30,7 +30,7 @@ export function useDeepSearch({
   onPlanCreated,
   onStepUpdate,
   onPlanCompleted,
-  pollingInterval = 500 // Reduced from 1000ms to 500ms for faster updates
+  pollingInterval = 500
 }: UseDeepSearchProps): UseDeepSearchResult {
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
   const [isExecutingPlan, setIsExecutingPlan] = useState(false);
