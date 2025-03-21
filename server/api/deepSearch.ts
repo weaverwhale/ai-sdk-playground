@@ -35,10 +35,7 @@ export function updateSearchPlan(planId: string, updatedPlan: SearchPlan): void 
   searchPlans.set(planId, planCopy);
 
   // Log the update to verify
-  console.log(
-    `[DEEP SEARCH] Updated plan ${planId} in global map:`,
-    planCopy.steps.map((s: PlanStep) => ({ id: s.id, status: s.status })),
-  );
+  console.log(`[DEEP SEARCH] Updated plan ${planId} in global map`);
 }
 
 // Function to safely get a search plan from the global map

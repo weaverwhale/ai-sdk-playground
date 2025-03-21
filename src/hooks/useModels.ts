@@ -24,7 +24,7 @@ export function useModels(): UseModelsResult {
 
   // Update localStorage when selected model changes
   useEffect(() => {
-    if (typeof window !== 'undefined' && selectedModel) {
+    if (selectedModel) {
       localStorage.setItem('selectedModel', selectedModel);
     }
   }, [selectedModel]);

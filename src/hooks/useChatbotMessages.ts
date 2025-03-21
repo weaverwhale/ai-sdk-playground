@@ -43,7 +43,6 @@ export function useChatbotMessages({
     isExecutingPlan,
     error: deepSearchError,
   } = useDeepSearch({
-    enabled: isDeepSearchMode,
     orchestratorModel: selectedModel,
     workerModel: selectedModel,
     onPlanCreated: (plan) => {

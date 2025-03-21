@@ -4,7 +4,6 @@ import { SearchPlan, PlanStepStatus } from '../types/chatTypes';
 interface UseDeepSearchProps {
   orchestratorModel?: string;
   workerModel?: string;
-  enabled: boolean;
   onPlanCreated?: (plan: SearchPlan) => void;
   onStepUpdate?: (stepId: string, status: PlanStepStatus, output?: string, error?: string) => void;
   onPlanCompleted?: (plan: SearchPlan) => void; // Callback for when plan is completed with summary
@@ -12,6 +11,8 @@ interface UseDeepSearchProps {
 }
 
 interface UseDeepSearchResult {
+  isDeepSearchMode: boolean;
+  setIsDeepSearchMode: (isDeepSearchMode: boolean) => void;
   createDeepSearchPlan: (query: string) => Promise<SearchPlan | null>;
   executeDeepSearchPlan: (plan: SearchPlan) => Promise<void>;
   isCreatingPlan: boolean;
@@ -26,12 +27,14 @@ interface UseDeepSearchResult {
 export function useDeepSearch({
   orchestratorModel = 'gpt-4o',
   workerModel = 'gpt-4o',
-  enabled = false,
   onPlanCreated,
   onStepUpdate,
   onPlanCompleted,
   pollingInterval = 500,
 }: UseDeepSearchProps): UseDeepSearchResult {
+  const [isDeepSearchMode, setIsDeepSearchMode] = useState(
+    typeof window !== 'undefined' ? localStorage.getItem('isDeepSearchMode') === 'true' : false,
+  );
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
   const [isExecutingPlan, setIsExecutingPlan] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -55,6 +58,11 @@ export function useDeepSearch({
     activePlanRef.current = null;
     pollErrorCountRef.current = 0; // Reset error count when stopping
   }, []);
+
+  // Update localStorage when selected model changes
+  useEffect(() => {
+    localStorage.setItem('isDeepSearchMode', isDeepSearchMode.toString());
+  }, [isDeepSearchMode]);
 
   // Function to check plan status
   const checkPlanStatus = useCallback(async () => {
@@ -323,7 +331,7 @@ export function useDeepSearch({
   // Create a search plan without executing it
   const createDeepSearchPlan = useCallback(
     async (query: string): Promise<SearchPlan | null> => {
-      if (!enabled) {
+      if (!isDeepSearchMode) {
         setError(new Error('Deep search mode is not enabled'));
         return null;
       }
@@ -353,13 +361,13 @@ export function useDeepSearch({
         setIsCreatingPlan(false);
       }
     },
-    [enabled, callDeepSearchAPI, onPlanCreated],
+    [isDeepSearchMode, callDeepSearchAPI, onPlanCreated],
   );
 
   // Execute each step in the search plan
   const executeDeepSearchPlan = useCallback(
     async (plan: SearchPlan): Promise<void> => {
-      if (!enabled) {
+      if (!isDeepSearchMode) {
         setError(new Error('Deep search mode is not enabled'));
         return;
       }
@@ -499,7 +507,7 @@ export function useDeepSearch({
       }
     },
     [
-      enabled,
+      isDeepSearchMode,
       startPolling,
       orchestratorModel,
       workerModel,
@@ -510,6 +518,8 @@ export function useDeepSearch({
   );
 
   return {
+    isDeepSearchMode,
+    setIsDeepSearchMode,
     createDeepSearchPlan,
     executeDeepSearchPlan,
     isCreatingPlan,

@@ -258,15 +258,7 @@ app.get('/api/deep-search-status', async (req, res) => {
     }
 
     // Log detailed information about the plan steps
-    console.log(
-      `[SERVER] Deep search status API - Plan ${planId} steps:`,
-      plan.steps.map((step) => ({
-        id: step.id,
-        status: step.status,
-        hasOutput: !!step.output,
-        hasError: !!step.error,
-      })),
-    );
+    console.log(`[SERVER] Deep search status API - Plan ${planId}`);
 
     // Verify each step has correct data
     plan.steps.forEach((step, index) => {

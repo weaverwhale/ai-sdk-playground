@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -8,6 +8,7 @@ import type { Components } from 'react-markdown';
 import { useChatbotMessages } from '../../hooks/useChatbotMessages';
 import { useServerMonitoring } from '../../hooks/useServerMonitoring';
 import { MessageProps, ToolCallsDisplayProps, ChatMessagesProps } from '../../types/chatTypes';
+import { useDeepSearch } from '../../hooks/useDeepSearch';
 
 import './index.css';
 
@@ -258,9 +259,6 @@ const ChatMessages = memo(
 ChatMessages.displayName = 'ChatMessages';
 
 const Chatbot: React.FC = () => {
-  // Deep search mode toggle
-  const [isDeepSearchMode, setIsDeepSearchMode] = useState(false);
-
   // Use server monitoring hook
   const {
     serverStatus,
@@ -270,6 +268,11 @@ const Chatbot: React.FC = () => {
     setSelectedModel,
     retryConnection,
   } = useServerMonitoring();
+
+  const { isDeepSearchMode, setIsDeepSearchMode } = useDeepSearch({
+    orchestratorModel: selectedModel,
+    workerModel: selectedModel,
+  });
 
   // Use chatbot messages hook
   const {
@@ -301,7 +304,7 @@ const Chatbot: React.FC = () => {
   };
 
   const toggleDeepSearchMode = () => {
-    setIsDeepSearchMode((prev) => !prev);
+    setIsDeepSearchMode((prev: boolean) => !prev);
     clearConversation();
   };
 
