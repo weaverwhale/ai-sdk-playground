@@ -1,8 +1,10 @@
-import React, { useEffect, memo, useState } from 'react';
-import { SearchPlan, PlanStep } from '../types/chatTypes';
+import { useEffect, memo, useState } from 'react';
+import { SearchPlan, PlanStep } from '../../types/chatTypes';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+
+import './index.css';
 
 interface SearchPlanDisplayProps {
   plan: SearchPlan;

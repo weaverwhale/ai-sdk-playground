@@ -14,7 +14,6 @@ import {
 } from '../../types/chatTypes';
 
 import './index.css';
-import '../SearchPlanDisplay.css';
 
 // Create a more permissive code component for ReactMarkdown
 const CodeBlock: Components['code'] = (props) => {
