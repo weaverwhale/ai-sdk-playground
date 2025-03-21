@@ -175,7 +175,7 @@
 
 .step-output {
   margin-top: 8px;
-  padding: 8px;
+  padding-bottom: 1px;
   background-color: #f9f9f9;
   border-radius: 4px;
   font-size: 0.9rem;
@@ -192,14 +192,8 @@
   border-top: 1px solid #f0c0c0;
 }
 
-/* Tool Call Styles */
-.step-tool-calls {
-  margin-bottom: 12px;
-}
-
 .tools-header {
-  margin-bottom: 10px;
-  padding: 4px 0;
+  padding: 4px 10px;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -210,7 +204,7 @@
 }
 
 .tool-call-item {
-  margin-bottom: 10px;
+  margin: 10px;
   border-left: 3px solid #3498db;
   background-color: #f5f9fc;
   border-radius: 4px;
@@ -221,8 +215,11 @@
   align-items: center;
   padding: 4px 8px;
   background-color: rgba(52, 152, 219, 0.1);
-  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
   border-radius: 4px 4px 0 0;
+}
+
+.tool-call-header.expanded {
+  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
 }
 
 .tool-call-badge {

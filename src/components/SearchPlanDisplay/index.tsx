@@ -22,6 +22,17 @@ interface SearchPlanStepCardProps {
 // Use memo to optimize rendering with custom comparison
 const SearchPlanStepCard = memo(
   ({ step, isExpanded, toggleExpansion, toolOptions }: SearchPlanStepCardProps) => {
+    // Add state to track expanded tool calls
+    const [expandedToolCalls, setExpandedToolCalls] = useState<Record<number, boolean>>({});
+
+    // Toggle function for tool calls
+    const toggleToolCall = (idx: number) => {
+      setExpandedToolCalls((prev) => ({
+        ...prev,
+        [idx]: !prev[idx],
+      }));
+    };
+
     // Status indicator styling
     const getStatusStyles = () => {
       switch (step.status) {
@@ -78,36 +89,46 @@ const SearchPlanStepCard = memo(
                 </div>
                 {step.toolCalls.map((toolCall: ToolCall, idx: number) => (
                   <div key={idx} className="tool-call-item">
-                    <div className="tool-call-header">
+                    <div
+                      className={`tool-call-header ${expandedToolCalls[idx] ? 'expanded' : ''}`}
+                      onClick={() => toggleToolCall(idx)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <span className="tool-call-badge">
                         <span className="tool-icon">🔧</span>
                         Tool used:{' '}
                         <strong>{toolOptions[toolCall.name]?.name || toolCall.name}</strong>
                       </span>
+                      <span className="toggle-icon">{expandedToolCalls[idx] ? '▼' : '▶'}</span>
                     </div>
-                    <div className="tool-call-result">
-                      {toolCall.output ? (
-                        <>
-                          {toolCall.output.length > 500 ? (
-                            <div className="tool-result-preview">
+                    {expandedToolCalls[idx] && (
+                      <div className="tool-call-result">
+                        {toolCall.output ? (
+                          <>
+                            {toolCall.output.length > 500 ? (
+                              <div className="tool-result-preview">
+                                <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
+                                  rehypePlugins={[rehypeRaw]}
+                                >
+                                  {`${toolCall.output.substring(0, 10000)}...`}
+                                </ReactMarkdown>
+                                <div className="tool-result-info">(Result truncated)</div>
+                              </div>
+                            ) : (
                               <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 rehypePlugins={[rehypeRaw]}
                               >
-                                {`${toolCall.output.substring(0, 10000)}...`}
+                                {toolCall.output}
                               </ReactMarkdown>
-                              <div className="tool-result-info">(Result truncated)</div>
-                            </div>
-                          ) : (
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                              {toolCall.output}
-                            </ReactMarkdown>
-                          )}
-                        </>
-                      ) : (
-                        <p className="no-result">No result data available from this tool.</p>
-                      )}
-                    </div>
+                            )}
+                          </>
+                        ) : (
+                          <p className="no-result">No result data available from this tool.</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
