@@ -301,10 +301,11 @@ const Chatbot: React.FC = () => {
 
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedModel(e.target.value);
+    clearConversation();
   };
 
   const toggleDeepSearchMode = () => {
-    setIsDeepSearchMode((prev: boolean) => !prev);
+    setIsDeepSearchMode(!isDeepSearchMode);
     clearConversation();
   };
 

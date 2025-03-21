@@ -1,7 +1,7 @@
-import { generateObject } from 'ai';
+import { generateObject, type LanguageModelV1, type Message } from 'ai';
 import { z } from 'zod';
-import { getModelProviderById } from '../modelProviders';
-import type { LanguageModelV1 } from 'ai';
+import { getModelProviderById, ModelProvider } from '../modelProviders';
+import { handleChatRequest } from './chat';
 
 // Global store for search plans
 // This needs to be exported so it can be used by the server
@@ -103,7 +103,7 @@ export async function handleDeepSearchRequest(body: {
 
       // We need to use the SAME plan object that was created,
       // not create a new one during execution
-      executeSearchPlan(plan, workerProvider.model)
+      executeSearchPlan(plan, workerProvider)
         .then((updatedPlan) => {
           // Verify we're updating with the same ID
           if (updatedPlan.createdAt !== plan.createdAt) {
@@ -197,7 +197,7 @@ async function createSearchPlan(query: string, orchestratorModel: AIModel): Prom
 // Function to execute each step in the search plan using the worker model
 export async function executeSearchPlan(
   plan: SearchPlan,
-  workerModel: AIModel,
+  workerModelProvider: ModelProvider,
 ): Promise<SearchPlan> {
   try {
     // Make sure we have a valid plan ID before proceeding
@@ -208,7 +208,8 @@ export async function executeSearchPlan(
     console.log(
       `[DEEP SEARCH] Starting execution of plan with ID ${plan.createdAt} and ${plan.steps.length} steps`,
     );
-    console.log(`[DEEP SEARCH] Using worker model:`, workerModel.modelId);
+
+    console.log(`[DEEP SEARCH] Found worker model provider: ${workerModelProvider.name}`);
 
     // Create a COPY of the plan to work with to avoid reference issues
     const workingPlan = JSON.parse(JSON.stringify(plan));
@@ -268,25 +269,28 @@ export async function executeSearchPlan(
           console.error(`[DEEP SEARCH] Plan not found after update! ID: ${workingPlan.createdAt}`);
         }
 
-        // Worker: Execute the current step
-        const { object: stepResult } = await generateObject({
-          model: workerModel,
-          schema: z.object({
-            explanation: z.string().describe('The detailed findings or explanation for this step'),
-          }),
-          system:
-            'You are an expert at executing specific search steps and providing focused, relevant results.',
-          prompt: `Execute this search step:
-          "${step.description}"
-          
-          This is part of answering the overall query: "${workingPlan.query}"
-          
-          Focus on providing a thorough but concise explanation based on the specific step assigned.`,
+        // Worker: Execute the current step using handleChatRequest
+        const result = await handleChatRequest({
+          messages: [
+            {
+              role: 'user',
+              content: `
+              Execute this search step: "${step.description}"
+              This is part of answering the overall query: "${workingPlan.query}"
+              Focus on providing a thorough but concise explanation based on the specific step assigned.
+              `,
+            } as Message,
+          ],
+          modelId: workerModelProvider.id,
+          stream: false,
         });
+
+        // Extract the text from the result
+        const text = result.text;
+        step.output = text;
 
         // Update step with the result and change status to completed
         step.status = 'completed';
-        step.output = stepResult.explanation;
         console.log(
           `[DEEP SEARCH] Step completed: "${step.description}" - ID: ${step.id} - Status: ${step.status}`,
         );
@@ -365,7 +369,7 @@ export async function executeSearchPlan(
       // Only generate a summary if we have at least one completed step
       if (stepOutputs.some((step) => step.status === 'completed')) {
         const { object: summaryResult } = await generateObject({
-          model: workerModel,
+          model: workerModelProvider.model,
           schema: z.object({
             summary: z
               .string()

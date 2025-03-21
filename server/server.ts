@@ -147,7 +147,7 @@ app.post('/api/execute-deep-search', async (req, res) => {
 
     // Execute the plan in the background
     // We don't await this because it can take a long time and we want to return quickly
-    executeSearchPlan(plan, orchestratorProvider.model)
+    executeSearchPlan(plan, orchestratorProvider)
       .then((updatedPlan) => {
         console.log(`[SERVER] Plan execution complete for plan ID: ${updatedPlan.createdAt}`);
       })
@@ -335,17 +335,23 @@ app.post('/api/chat', async (req, res) => {
     console.log('[SERVER] Processing chat request...');
     const response = await handleChatRequest({ messages, modelId });
 
-    // Set response headers
-    for (const [key, value] of response.headers.entries()) {
-      res.setHeader(key, value);
-    }
+    // Check if response is a Response object (has headers and body)
+    if ('headers' in response && 'body' in response) {
+      // Set response headers
+      for (const [key, value] of response.headers.entries()) {
+        res.setHeader(key, value);
+      }
 
-    // Pipe the response body if it exists
-    if (response.body) {
-      const nodeStream = webToNodeStream(response.body);
-      nodeStream.pipe(res);
+      // Pipe the response body if it exists
+      if (response.body) {
+        const nodeStream = webToNodeStream(response.body);
+        nodeStream.pipe(res);
+      } else {
+        res.end();
+      }
     } else {
-      res.end();
+      // Handle the GenerateTextResult case
+      res.json(response);
     }
   } catch (error) {
     console.error('[SERVER] API error:', error instanceof Error ? error.message : String(error));

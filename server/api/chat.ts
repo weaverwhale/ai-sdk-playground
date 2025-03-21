@@ -1,12 +1,17 @@
-import { Message } from 'ai';
+import { generateText, Message } from 'ai';
 import { getModelProviderById } from '../modelProviders';
 import { streamText } from 'ai';
 import { tools, geminiTools } from '../tools';
 
 const DEFAULT_MODEL_ID = 'openai';
 
-export async function handleChatRequest(body: { messages: Message[]; modelId?: string }) {
+export async function handleChatRequest(body: {
+  messages: Message[];
+  modelId?: string;
+  stream?: boolean;
+}) {
   try {
+    const isStream = body.stream !== false;
     const modelId = body.modelId || DEFAULT_MODEL_ID;
     const modelProvider = getModelProviderById(modelId);
 
@@ -28,16 +33,26 @@ export async function handleChatRequest(body: { messages: Message[]; modelId?: s
 
     const computedTools = modelId === 'gemini' ? geminiTools : tools;
 
-    const result = streamText({
-      model,
-      tools: computedTools,
-      messages: messagesWithSystem,
-      maxTokens: 5000,
-      experimental_continueSteps: true,
-      maxSteps: 10,
-    });
+    if (isStream) {
+      const result = streamText({
+        model,
+        tools: computedTools,
+        messages: messagesWithSystem,
+        maxTokens: 5000,
+        experimental_continueSteps: true,
+        maxSteps: 10,
+      });
 
-    return result.toDataStreamResponse();
+      return result.toDataStreamResponse();
+    } else {
+      const result = await generateText({
+        model,
+        tools: computedTools,
+        messages: messagesWithSystem,
+      });
+
+      return result;
+    }
   } catch (error) {
     console.error('[API] Chat request error:', error);
     throw error;
