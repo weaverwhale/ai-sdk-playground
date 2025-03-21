@@ -294,7 +294,9 @@ export async function executeSearchPlan(
         step.output =
           'toolResults' in result && result.toolResults.length > 0
             ? result.toolResults[0].result
-            : result.text || '';
+            : result.text.length > 0
+            ? result.text
+            : JSON.stringify(result);
 
         // Update step with the result and change status to completed
         step.status = 'completed';
