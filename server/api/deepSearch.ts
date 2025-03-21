@@ -289,7 +289,12 @@ export async function executeSearchPlan(
           stream: false,
         });
 
-        step.output = JSON.stringify(result);
+        // @TODO handle tool calls better?
+
+        step.output =
+          'toolResults' in result && result.toolResults.length > 0
+            ? result.toolResults[0].result
+            : result.text || '';
 
         // Update step with the result and change status to completed
         step.status = 'completed';
