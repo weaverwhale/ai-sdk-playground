@@ -106,7 +106,7 @@ export async function handleDeepSearchRequest(body: {
         `[DEEP SEARCH] Executing search plan with ${plan.steps.length} steps and ID: ${plan.createdAt}`,
       );
 
-      // IMPORTANT: We need to use the SAME plan object that was created,
+      // We need to use the SAME plan object that was created,
       // not create a new one during execution
       executeSearchPlan(plan, workerProvider.model)
         .then((updatedPlan) => {
@@ -218,7 +218,7 @@ export async function executeSearchPlan(
     // Create a COPY of the plan to work with to avoid reference issues
     const workingPlan = JSON.parse(JSON.stringify(plan));
 
-    // IMPORTANT: Verify the plan exists in the map before execution
+    // Verify the plan exists in the map before execution
     const existingPlan = searchPlans.get(workingPlan.createdAt);
     if (!existingPlan) {
       console.error(

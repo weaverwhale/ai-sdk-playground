@@ -186,6 +186,14 @@ export function useDeepSearch({
         console.error('[DEEP SEARCH] Received invalid plan data:', updatedPlan);
         throw new Error('Received invalid plan data from server');
       }
+
+      if (updatedPlan.summary) {
+        console.log('[DEEP SEARCH] Search plan complete with summary:', updatedPlan.summary);
+        stopPolling();
+        setIsExecutingPlan(false);
+        onPlanCompleted?.(updatedPlan);
+        // @TODO push final message to chat
+      }
     } catch (err) {
       console.error('[DEEP SEARCH] Error checking plan status:', err);
 

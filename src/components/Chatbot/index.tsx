@@ -5,8 +5,8 @@ import rehypeRaw from 'rehype-raw';
 import MermaidDiagram from '../MermaidDiagram';
 import SearchPlanDisplay from '../SearchPlanDisplay';
 import type { Components } from 'react-markdown';
-import { useChatbotMessages } from '../../hooks/chatbotMessages';
-import { useServerMonitoring } from '../../hooks/serverMonitoring';
+import { useChatbotMessages } from '../../hooks/useChatbotMessages';
+import { useServerMonitoring } from '../../hooks/useServerMonitoring';
 import { MessageProps, ToolCallsDisplayProps, ChatMessagesProps } from '../../types/chatTypes';
 
 import './index.css';
