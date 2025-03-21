@@ -25,8 +25,8 @@ interface UseDeepSearchResult {
  * A hook that uses the deep search API endpoint
  */
 export function useDeepSearch({
-  orchestratorModel = 'gpt-4o',
-  workerModel = 'gpt-4o',
+  orchestratorModel = 'gpt-4o-mini',
+  workerModel = 'gpt-4o-mini',
   onPlanCreated,
   onStepUpdate,
   onPlanCompleted,
@@ -73,9 +73,14 @@ export function useDeepSearch({
       const planId = activePlanRef.current.createdAt;
       console.log(`[DEEP SEARCH] Checking status for plan ID: ${planId}`);
 
-      // Call API to get updated plan status with a timestamp to avoid caching
-      const timestamp = Date.now();
-      const response = await fetch(`/api/deep-search-status?planId=${planId}&_t=${timestamp}`);
+      // Call API to get updated plan status
+      const response = await fetch(`/api/deep-search-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ planId }),
+      });
 
       if (!response.ok) {
         console.warn(
@@ -128,16 +133,6 @@ export function useDeepSearch({
       // Compare steps and update any that have changed
       if (updatedPlan && updatedPlan.steps) {
         let allCompleted = true;
-
-        // Create debug string to show all status changes
-        const statusChanges = updatedPlan.steps
-          .map((updatedStep, index: number) => {
-            const currentStep = activePlanRef.current?.steps[index];
-            return `${currentStep?.id}: ${currentStep?.status} -> ${updatedStep.status}`;
-          })
-          .join(', ');
-
-        console.log(`[DEEP SEARCH] Status changes check: ${statusChanges}`);
 
         // Force creation of a completely new plan object to ensure reactivity
         const newPlan: SearchPlan = {
@@ -308,8 +303,8 @@ export function useDeepSearch({
           },
           body: JSON.stringify({
             query,
-            orchestratorModelId: orchestratorModel,
-            workerModelId: workerModel,
+            orchestratorModel,
+            workerModel,
             executeAll,
           }),
         });

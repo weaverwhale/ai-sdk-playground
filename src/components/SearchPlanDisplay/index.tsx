@@ -22,11 +22,6 @@ const SearchPlanStepCard = memo(
     isExpanded: boolean;
     toggleExpansion: () => void;
   }) => {
-    // Debug logging for step status
-    useEffect(() => {
-      console.log(`Step ${step.id} rendered with status: ${step.status}`);
-    }, [step.id, step.status]);
-
     // Status indicator styling
     const getStatusStyles = () => {
       switch (step.status) {
@@ -108,9 +103,6 @@ const SearchPlanStepCard = memo(
   },
 );
 
-// Add display name for debugging
-SearchPlanStepCard.displayName = 'SearchPlanStepCard';
-
 // Use memo for the main component as well with custom comparison
 const SearchPlanDisplay = memo(
   ({ plan, className = '' }: SearchPlanDisplayProps) => {
@@ -150,32 +142,6 @@ const SearchPlanDisplay = memo(
         return () => clearInterval(timerId);
       }
     }, [plan.steps, updateCounter]);
-
-    // Debug logging to see when the component rerenders
-    useEffect(() => {
-      console.log(
-        '[SEARCH PLAN] Plan rerendered with steps:',
-        plan.steps.map((s) => ({ id: s.id, status: s.status })),
-      );
-
-      // Log the actual DOM elements to verify what's shown in the UI
-      setTimeout(() => {
-        const stepElements = document.querySelectorAll('.search-plan-step');
-        console.log(
-          '[SEARCH PLAN] Current DOM step elements:',
-          Array.from(stepElements).map((el) => ({
-            id: el.getAttribute('data-step-id'),
-            status: el.getAttribute('data-status'),
-          })),
-        );
-      }, 100);
-    }, [plan, plan.steps, updateCounter]);
-
-    // Additional debug effect to log when specific step statuses change
-    useEffect(() => {
-      const statuses = plan.steps.map((s) => s.status).join(',');
-      console.log('[SEARCH PLAN] Step statuses changed:', statuses);
-    }, [plan.steps.map((s) => s.status).join(',')]);
 
     if (!plan || !plan.steps || plan.steps.length === 0) {
       return null;
@@ -300,8 +266,5 @@ const SearchPlanDisplay = memo(
     return true;
   },
 );
-
-// Add display name for debugging
-SearchPlanDisplay.displayName = 'SearchPlanDisplay';
 
 export default SearchPlanDisplay;

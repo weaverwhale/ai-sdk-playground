@@ -79,7 +79,7 @@ app.get('/api/tools', async (_req, res) => {
 // deep search
 app.post('/api/deep-search', async (req, res) => {
   try {
-    const { query, orchestratorModelId, workerModelId, executeAll } = req.body;
+    const { query, orchestratorModel, workerModel, executeAll } = req.body;
 
     if (!query || typeof query !== 'string') {
       console.error('[SERVER] Invalid deep search query:', req.body);
@@ -89,8 +89,8 @@ app.post('/api/deep-search', async (req, res) => {
     console.log(`[SERVER] Processing deep search request for query: "${query}"`);
     const result = await handleDeepSearchRequest({
       query,
-      orchestratorModelId,
-      workerModelId,
+      orchestratorModel,
+      workerModel,
       executeAll,
     });
 
@@ -110,7 +110,7 @@ app.post('/api/deep-search', async (req, res) => {
 // execute a previously created deep search plan
 app.post('/api/execute-deep-search', async (req, res) => {
   try {
-    const { planId, orchestratorModelId } = req.body;
+    const { planId, orchestratorModel } = req.body;
 
     if (!planId || typeof planId !== 'string') {
       console.error('[SERVER] Execute deep search API - Missing or invalid planId:', planId);
@@ -140,7 +140,7 @@ app.post('/api/execute-deep-search', async (req, res) => {
       });
     }
 
-    const orchestratorProvider = getModelProviderById(orchestratorModelId) || availableProviders[0];
+    const orchestratorProvider = getModelProviderById(orchestratorModel) || availableProviders[0];
     console.log(
       `[SERVER] Execute deep search API - Using model provider: ${orchestratorProvider.name}`,
     );
@@ -171,9 +171,9 @@ app.post('/api/execute-deep-search', async (req, res) => {
 });
 
 // get current status of a deep search plan
-app.get('/api/deep-search-status', async (req, res) => {
+app.post('/api/deep-search-status', async (req, res) => {
   try {
-    const { planId } = req.query;
+    const { planId } = req.body;
 
     if (!planId || typeof planId !== 'string') {
       console.error('[SERVER] Deep search status API - Missing or invalid planId:', planId);
@@ -182,9 +182,7 @@ app.get('/api/deep-search-status', async (req, res) => {
 
     console.log(`[SERVER] Deep search status API - Retrieving plan with ID: ${planId}`);
 
-    // Debug: Show all available plans in the searchPlans map
     const allPlans = Array.from(searchPlans.keys());
-    console.log(`[SERVER] All available plan IDs: ${allPlans.join(', ')}`);
 
     // Try to get the plan directly first
     let plan = getSearchPlan(planId);

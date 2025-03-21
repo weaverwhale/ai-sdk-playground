@@ -50,15 +50,15 @@ export function getSearchPlan(planId: string): SearchPlan | undefined {
 // Main handler for deep search requests
 export async function handleDeepSearchRequest(body: {
   query: string;
-  orchestratorModelId?: string;
-  workerModelId?: string;
+  orchestratorModel?: string;
+  workerModel?: string;
   executeAll?: boolean;
 }) {
   try {
     const {
       query,
-      orchestratorModelId = 'openai', // Default to standard model
-      workerModelId = 'openai',
+      orchestratorModel = 'gpt-4o-mini', // Default to standard model
+      workerModel = 'gpt-4o-mini',
       executeAll = true, // By default, execute all steps
     } = body;
 
@@ -68,8 +68,8 @@ export async function handleDeepSearchRequest(body: {
     }
 
     // Get model providers
-    const orchestratorProvider = getModelProviderById(orchestratorModelId);
-    const workerProvider = getModelProviderById(workerModelId);
+    const orchestratorProvider = getModelProviderById(orchestratorModel);
+    const workerProvider = getModelProviderById(workerModel);
 
     if (!orchestratorProvider || !workerProvider) {
       throw new Error(`One or more model providers not found.`);
@@ -80,12 +80,10 @@ export async function handleDeepSearchRequest(body: {
     }
 
     // Use the orchestrator to create a search plan
-    console.log(`[DEEP SEARCH] Creating search plan for query: "${query}"`);
+    console.log(
+      `[DEEP SEARCH] Creating search plan for query: "${query}" using orchestrator model: ${orchestratorProvider.model.modelId}`,
+    );
     const plan = await createSearchPlan(query, orchestratorProvider.model);
-
-    // Debug: Get a snapshot of all existing plans before adding the new one
-    const existingPlans = Array.from(searchPlans.keys());
-    console.log(`[DEEP SEARCH] Existing plans before adding new plan: ${existingPlans.join(', ')}`);
 
     // Store the plan in the global map using the createdAt ID
     updateSearchPlan(plan.createdAt, plan);
@@ -210,7 +208,7 @@ export async function executeSearchPlan(
     console.log(
       `[DEEP SEARCH] Starting execution of plan with ID ${plan.createdAt} and ${plan.steps.length} steps`,
     );
-    console.log(`[DEEP SEARCH] Using worker model:`, workerModel);
+    console.log(`[DEEP SEARCH] Using worker model:`, workerModel.modelId);
 
     // Create a COPY of the plan to work with to avoid reference issues
     const workingPlan = JSON.parse(JSON.stringify(plan));

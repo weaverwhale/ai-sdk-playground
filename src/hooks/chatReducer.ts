@@ -241,10 +241,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         steps: updatedSteps,
       };
 
-      // Debug: log all step statuses to verify they're updated
-      const stepStatuses = updatedSteps.map((step) => `${step.id}: ${step.status}`).join(', ');
-      console.log(`[CHAT REDUCER] Updated plan steps: ${stepStatuses}`);
-
       // Create a completely new state object
       const newState = {
         ...state,
@@ -271,12 +267,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         },
       };
 
-      // Debug: log all step statuses to verify they're updated
-      const stepStatuses = action.plan.steps
-        .map((step: any) => `${step.id}: ${step.status}`)
-        .join(', ');
-      console.log(`[CHAT REDUCER] Updated plan steps: ${stepStatuses}`);
-
       return newState;
     }
 
@@ -290,7 +280,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         if (step.status === 'pending' || step.status === 'running') {
           return {
             ...step,
-            status: 'error',
+            status: 'error' as const,
             error: action.error || 'Failed to complete step due to polling error',
           };
         }
@@ -302,10 +292,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ...state.searchPlan,
         steps: updatedSteps,
       };
-
-      // Debug: log all step statuses to verify they're updated
-      const stepStatuses = updatedSteps.map((step) => `${step.id}: ${step.status}`).join(', ');
-      console.log(`[CHAT REDUCER] Updated plan steps after error: ${stepStatuses}`);
 
       return {
         ...state,
