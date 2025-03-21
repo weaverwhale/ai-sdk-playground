@@ -289,7 +289,6 @@ const Chatbot: React.FC = () => {
     clearConversation,
     searchPlan,
     isCreatingPlan,
-    handleDeepSearchSummary,
   } = useChatbotMessages({
     selectedModel,
     isDeepSearchMode,

@@ -61,6 +61,28 @@ export function useChatbotMessages({
         payload: { stepId, status, output, error },
       });
     },
+    onPlanCompleted: (plan) => {
+      console.log('[DEEP SEARCH] Plan completed with summary:', plan.summary);
+      if (plan.summary) {
+        dispatch({
+          type: 'ADD_ASSISTANT_MESSAGE',
+          payload: {
+            content: plan.summary,
+            conversationTurn: plan.conversationTurn || chatState.currentConversationTurn,
+          },
+        });
+
+        hasAddedFinalResponseRef.current = true;
+
+        dispatch({
+          type: 'UPDATE_FINAL_RESPONSE',
+          payload: {
+            content: plan.summary,
+            conversationTurn: chatState.currentConversationTurn,
+          },
+        });
+      }
+    },
   });
 
   // Refs
