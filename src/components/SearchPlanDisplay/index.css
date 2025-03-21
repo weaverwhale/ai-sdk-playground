@@ -1,11 +1,8 @@
-/* SearchPlanDisplay Styles */
 .search-plan-container {
-  background-color: #f7f9fc;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin: 16px 0;
-  padding: 16px;
-  transition: all 0.3s ease;
+  width: 100%;
+  max-width: 100% !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
 }
 
 .search-plan-header {
