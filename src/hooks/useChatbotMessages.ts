@@ -15,6 +15,7 @@ import { useDeepSearch } from './useDeepSearch';
 export function useChatbotMessages({
   selectedModel,
   isDeepSearchMode = false,
+  userId,
 }: UseChatbotMessagesProps): UseChatbotMessagesResult {
   // Use our custom hooks
   const toolOptions = useToolOptions();
@@ -225,7 +226,10 @@ export function useChatbotMessages({
     api: '/api/chat',
     maxSteps: 5,
     id: conversationId,
-    body: { modelId: selectedModel },
+    body: {
+      modelId: selectedModel,
+      userId,
+    },
     onError: handleChatError,
     onToolCall: handleToolCall,
   });
@@ -342,13 +346,47 @@ export function useChatbotMessages({
         }
       } else if (!lastToolCallRef.current && !toolCallResponseRef.current && status === 'ready') {
         // Case 2.5: Regular assistant message (non-tool response) when complete
-        dispatch({
-          type: 'ADD_ASSISTANT_MESSAGE',
-          payload: {
-            content: lastMsg.content,
-            conversationTurn: chatState.currentConversationTurn,
-          },
-        });
+
+        // Check if we already have a very similar assistant message to avoid duplicates
+        // Only look for exact content matches within the current conversation turn
+        const existingExactMatch = chatMessages.find(
+          (m: ChatMessage) =>
+            m.role === 'assistant' &&
+            m.content === lastMsg.content &&
+            m.conversationTurn === chatState.currentConversationTurn,
+        );
+
+        if (!existingExactMatch) {
+          // Check if we have any assistant messages for this turn that we should update
+          // rather than creating a new one
+          const existingAssistantMessage = chatMessages.find(
+            (m: ChatMessage) =>
+              m.role === 'assistant' &&
+              !m.isFinalResponse &&
+              !m.toolCalls?.length &&
+              m.conversationTurn === chatState.currentConversationTurn,
+          );
+
+          if (existingAssistantMessage) {
+            // Update existing message instead of creating a new one
+            dispatch({
+              type: 'UPDATE_ASSISTANT_MESSAGE',
+              payload: {
+                content: lastMsg.content,
+                conversationTurn: chatState.currentConversationTurn,
+              },
+            });
+          } else {
+            // No existing message found, create a new one
+            dispatch({
+              type: 'ADD_ASSISTANT_MESSAGE',
+              payload: {
+                content: lastMsg.content,
+                conversationTurn: chatState.currentConversationTurn,
+              },
+            });
+          }
+        }
       } else if (
         !lastToolCallRef.current &&
         toolCallResponseRef.current &&

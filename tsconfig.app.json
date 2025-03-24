@@ -22,5 +22,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "server/api"]
+  "include": ["src", "server"],
+  "rules": {
+    "@typescript-eslint/ban-ts-comment": "off"
+  }
 }

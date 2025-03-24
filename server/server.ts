@@ -325,7 +325,7 @@ function webToNodeStream(webStream: ReadableStream): Readable {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { messages, modelId } = req.body;
+    const { messages, modelId, stream, userId } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
       console.error('[SERVER] Invalid messages format:', req.body);
@@ -333,7 +333,12 @@ app.post('/api/chat', async (req, res) => {
     }
 
     console.log('[SERVER] Processing chat request...');
-    const response = await handleChatRequest({ messages, modelId });
+    const response = await handleChatRequest({
+      messages,
+      modelId,
+      stream,
+      userId: userId && userId.trim() ? userId : 'anonymous', // Ensure userId is never empty
+    });
 
     // Check if response is a Response object (has headers and body)
     if ('headers' in response && 'body' in response) {

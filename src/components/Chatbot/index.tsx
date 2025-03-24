@@ -9,6 +9,7 @@ import { useChatbotMessages } from '../../hooks/useChatbotMessages';
 import { useServerMonitoring } from '../../hooks/useServerMonitoring';
 import { MessageProps, ToolCallsDisplayProps, ChatMessagesProps } from '../../types/chatTypes';
 import { useDeepSearch } from '../../hooks/useDeepSearch';
+import { useUserInfo } from '../../hooks/useUserInfo';
 
 import './index.css';
 
@@ -253,7 +254,6 @@ const ChatMessages = memo(
 ChatMessages.displayName = 'ChatMessages';
 
 const Chatbot: React.FC = () => {
-  // Use server monitoring hook
   const {
     serverStatus,
     serverInfo,
@@ -268,7 +268,8 @@ const Chatbot: React.FC = () => {
     workerModel: selectedModel,
   });
 
-  // Use chatbot messages hook
+  const { userId } = useUserInfo();
+
   const {
     chatMessages,
     input,
@@ -291,6 +292,7 @@ const Chatbot: React.FC = () => {
   } = useChatbotMessages({
     selectedModel,
     isDeepSearchMode,
+    userId,
   });
 
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

@@ -287,7 +287,7 @@ export async function executeSearchPlan(
               This is part of answering the overall query: "${workingPlan.query}"
               Focus on providing a thorough but concise explanation based on the specific step assigned.
               `,
-            } as Message,
+            },
           ],
           modelId: workerModelProvider.id,
           stream: false,
@@ -298,7 +298,12 @@ export async function executeSearchPlan(
 
         // Add tool call information to step data if available
         // NOTE toolResults = toolCalls, we get it as toolResults here
-        if ('toolResults' in result && result.toolResults.length > 0) {
+        if (
+          result &&
+          'toolResults' in result &&
+          Array.isArray(result.toolResults) &&
+          result.toolResults.length > 0
+        ) {
           console.log(
             `[DEEP SEARCH] Tool results for step ${step.id} (${result.toolResults.length})`,
           );

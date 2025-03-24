@@ -1,9 +1,10 @@
-import { moby } from './Moby';
+import { moby } from './moby';
 import { urbanDictionary } from './urbanDictionary';
 import { chartGenerator } from './chartGenerator';
 import { forecast } from './forecast';
 import { wikipedia } from './wikipedia';
 import { weeklyReport } from './weeklyReport';
+import { memory } from './memory';
 
 export const tools = {
   moby,
@@ -12,6 +13,7 @@ export const tools = {
   forecast,
   wikipedia,
   weeklyReport,
+  memory,
 };
 
 export const geminiTools = {
@@ -21,4 +23,5 @@ export const geminiTools = {
   forecast,
   wikipedia,
   weeklyReport,
+  memory,
 };

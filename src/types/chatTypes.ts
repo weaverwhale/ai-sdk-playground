@@ -66,6 +66,7 @@ export interface SearchPlan {
 export interface UseChatbotMessagesProps {
   selectedModel: string;
   isDeepSearchMode?: boolean;
+  userId: string;
 }
 
 export interface UseChatbotMessagesResult {
