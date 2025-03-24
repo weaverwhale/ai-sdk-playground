@@ -38,7 +38,7 @@ export function useDeepSearch({
   onPlanCompleted,
   pollingInterval = 500,
 }: UseDeepSearchProps): UseDeepSearchResult {
-  const [isDeepSearchMode, setIsDeepSearchMode] = useState(
+  const [isDeepSearchMode, setIsDeepSearchModeState] = useState(
     typeof window !== 'undefined' ? localStorage.getItem('isDeepSearchMode') === 'true' : false,
   );
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
@@ -64,6 +64,49 @@ export function useDeepSearch({
     activePlanRef.current = null;
     pollErrorCountRef.current = 0; // Reset error count when stopping
   }, []);
+
+  // Function to set deep search mode and clear everything when toggled
+  const setIsDeepSearchMode = useCallback(
+    (newMode: boolean) => {
+      // If we're turning off deep search or changing the mode, stop any ongoing operations
+      if (!newMode || newMode !== isDeepSearchMode) {
+        // Stop any ongoing polling
+        stopPolling();
+
+        // Reset all states
+        setIsCreatingPlan(false);
+        setIsExecutingPlan(false);
+        setError(null);
+
+        // Clear any active plans
+        if (activePlanRef.current) {
+          console.log('[DEEP SEARCH] Clearing active plan');
+
+          // If there's an active plan with pending or running steps, mark them as errors with cancellation message
+          if (activePlanRef.current.steps) {
+            activePlanRef.current.steps.forEach((step) => {
+              if (step.status === 'pending' || step.status === 'running') {
+                onStepUpdate?.(
+                  step.id,
+                  'error',
+                  undefined,
+                  'Operation cancelled: Deep search mode toggled',
+                  step.toolCalls,
+                );
+              }
+            });
+          }
+
+          // Clear the active plan reference
+          activePlanRef.current = null;
+        }
+      }
+
+      // Set the new mode state
+      setIsDeepSearchModeState(newMode);
+    },
+    [isDeepSearchMode, stopPolling, onStepUpdate],
+  );
 
   // Update localStorage when selected model changes
   useEffect(() => {
