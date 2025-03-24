@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { pipeline } from '@xenova/transformers';
-import { LocalStorage } from 'node-localstorage';
 import fs from 'fs';
 import path from 'path';
 import hnswlib from 'hnswlib-node';
@@ -9,7 +8,6 @@ import crypto from 'crypto';
 // Define the data directory
 const DATA_DIR = path.join(process.cwd(), 'memory');
 const VECTOR_DIR = path.join(DATA_DIR, 'vectors');
-const CONTENT_DIR = path.join(DATA_DIR, 'content');
 const METADATA_PATH = path.join(DATA_DIR, 'metadata.json');
 const VECTOR_DIM = 384; // Dimension for the MiniLM model
 
@@ -20,12 +18,6 @@ if (!fs.existsSync(DATA_DIR)) {
 if (!fs.existsSync(VECTOR_DIR)) {
   fs.mkdirSync(VECTOR_DIR, { recursive: true });
 }
-if (!fs.existsSync(CONTENT_DIR)) {
-  fs.mkdirSync(CONTENT_DIR, { recursive: true });
-}
-
-// Initialize local storage
-const localStorage = new LocalStorage(CONTENT_DIR);
 
 // Initialize vector index
 let vectorIndex: InstanceType<typeof hnswlib.HierarchicalNSW>;
@@ -47,31 +39,6 @@ function initVectorIndex() {
   }
 }
 
-// Load or create metadata
-let metadata: {
-  count: number;
-  userMemories: Record<string, string[]>;
-} = { count: 0, userMemories: {} };
-
-function loadMetadata() {
-  if (fs.existsSync(METADATA_PATH)) {
-    try {
-      const data = fs.readFileSync(METADATA_PATH, 'utf8');
-      metadata = JSON.parse(data);
-      console.log('[MEMORY] Loaded metadata, memory count:', metadata.count);
-    } catch (error) {
-      console.error('[MEMORY] Error loading metadata:', error);
-      metadata = { count: 0, userMemories: {} };
-    }
-  } else {
-    console.log('[MEMORY] No metadata found, starting fresh');
-  }
-}
-
-function saveMetadata() {
-  fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf8');
-}
-
 // Define interfaces for memory data
 interface MemoryData {
   id: string;
@@ -81,6 +48,41 @@ interface MemoryData {
   timestamp: string;
   updatedAt?: string;
   similarity?: number;
+}
+
+// Enhanced metadata to store memory content directly
+interface EnhancedMetadata {
+  count: number;
+  userMemories: Record<string, string[]>;
+  memories: Record<string, MemoryData>;
+}
+
+// Load or create metadata
+let metadata: EnhancedMetadata = { count: 0, userMemories: {}, memories: {} };
+
+function loadMetadata() {
+  if (fs.existsSync(METADATA_PATH)) {
+    try {
+      const data = fs.readFileSync(METADATA_PATH, 'utf8');
+      metadata = JSON.parse(data);
+      console.log('[MEMORY] Loaded metadata, memory count:', metadata.count);
+
+      // Initialize memories object if it doesn't exist (backward compatibility)
+      if (!metadata.memories) {
+        metadata.memories = {};
+        saveMetadata();
+      }
+    } catch (error) {
+      console.error('[MEMORY] Error loading metadata:', error);
+      metadata = { count: 0, userMemories: {}, memories: {} };
+    }
+  } else {
+    console.log('[MEMORY] No metadata found, starting fresh');
+  }
+}
+
+function saveMetadata() {
+  fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf8');
 }
 
 // Initialize embedding model
@@ -127,7 +129,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
   throw new Error('Failed to generate embedding');
 }
 
-// Save memory to local storage and vector store
+// Save memory to metadata and vector store
 async function saveMemory(
   userId: string,
   content: string,
@@ -140,7 +142,7 @@ async function saveMemory(
     // Generate embedding
     const embedding = await generateEmbedding(content);
 
-    // Save content and metadata to localStorage
+    // Create memory data object
     const memoryData = {
       id: memoryId,
       userId,
@@ -149,7 +151,8 @@ async function saveMemory(
       timestamp: new Date().toISOString(),
     };
 
-    localStorage.setItem(memoryId, JSON.stringify(memoryData));
+    // Store memory data directly in metadata
+    metadata.memories[memoryId] = memoryData;
 
     // Add to vector index
     // @ts-ignore - Types don't match, but it works at runtime
@@ -191,35 +194,28 @@ async function searchMemories(
     // @ts-ignore - Types don't match, but it works at runtime
     const searchResults = vectorIndex.searchKnn(queryEmbedding, limit * 2);
 
-    // Fetch actual memory data
-    const results = await Promise.all(
-      searchResults.neighbors.map(async (idx: number) => {
-        // Find memory ID by index
-        const memoryId = findMemoryIdByIndex(userId, idx);
-        if (!memoryId) return null;
+    // Find relevant memory IDs and create results with similarity scores
+    const memoryResults: MemoryData[] = [];
 
-        // Get memory content
-        const memoryJson = localStorage.getItem(memoryId);
-        if (!memoryJson) return null;
+    for (let i = 0; i < searchResults.neighbors.length; i++) {
+      const idx = searchResults.neighbors[i];
+      const memoryId = findMemoryIdByIndex(userId, idx);
 
-        try {
-          const memory = JSON.parse(memoryJson);
-          return {
+      if (memoryId && metadata.memories[memoryId]) {
+        const memory = metadata.memories[memoryId];
+
+        // Only include memories for this user
+        if (memory.userId === userId) {
+          memoryResults.push({
             ...memory,
-            similarity: 1 - searchResults.distances[searchResults.neighbors.indexOf(idx)],
-          };
-        } catch (e) {
-          console.error(`[MEMORY] Error parsing memory ${memoryId}:`, e);
-          return null;
+            similarity: 1 - searchResults.distances[i],
+          });
         }
-      }),
-    );
+      }
+    }
 
-    // Filter null results, limit to user's memories, and sort by similarity
-    return results
-      .filter((result): result is MemoryData => result !== null && result.userId === userId)
-      .sort((a, b) => (b.similarity || 0) - (a.similarity || 0))
-      .slice(0, limit);
+    // Sort by similarity and limit results
+    return memoryResults.sort((a, b) => (b.similarity || 0) - (a.similarity || 0)).slice(0, limit);
   } catch (error) {
     console.error('[MEMORY] Error searching memories:', error);
     return [];
@@ -246,23 +242,21 @@ function findMemoryIdByIndex(userId: string, index: number): string | null {
 async function updateMemory(memoryId: string, newContent: string): Promise<boolean> {
   try {
     // Get the existing memory
-    const memoryJson = localStorage.getItem(memoryId);
-    if (!memoryJson) {
+    const memory = metadata.memories[memoryId];
+    if (!memory) {
       console.error(`[MEMORY] Memory ${memoryId} not found`);
       return false;
     }
-
-    const memory = JSON.parse(memoryJson);
 
     // Update the content and generate new embedding
     memory.content = newContent;
     memory.updatedAt = new Date().toISOString();
 
-    // Save updated memory
-    localStorage.setItem(memoryId, JSON.stringify(memory));
+    // Save updated memory to metadata
+    metadata.memories[memoryId] = memory;
+    saveMetadata();
 
     // Generate new embedding and update the vector store
-    // This is simplified - in a real implementation, we'd need to track indices better
     const newEmbedding = await generateEmbedding(newContent);
 
     // Find the index for this memory ID

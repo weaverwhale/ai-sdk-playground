@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -7,7 +7,12 @@ import SearchPlanDisplay from '../SearchPlanDisplay';
 import type { Components } from 'react-markdown';
 import { useChatbotMessages } from '../../hooks/useChatbotMessages';
 import { useServerMonitoring } from '../../hooks/useServerMonitoring';
-import { MessageProps, ToolCallsDisplayProps, ChatMessagesProps } from '../../types/chatTypes';
+import {
+  MessageProps,
+  ToolCallsDisplayProps,
+  ChatMessagesProps,
+  ChatMessage,
+} from '../../types/chatTypes';
 import { useDeepSearch } from '../../hooks/useDeepSearch';
 import { useUserInfo } from '../../hooks/useUserInfo';
 
@@ -171,6 +176,43 @@ const ChatMessages = memo(
     isDeepSearchMode,
     isCreatingPlan,
   }: ChatMessagesProps) => {
+    // Deduplicate messages before rendering
+    // This specifically addresses the issue with duplicate messages after tool calls
+    const deduplicatedMessages = useMemo(() => {
+      const uniqueMessages: ChatMessage[] = [];
+      const seenContent = new Set<string>();
+
+      // Process messages in order, keeping track of what we've seen
+      chatMessages.forEach((message) => {
+        // Always include user messages
+        if (message.role === 'user') {
+          uniqueMessages.push(message);
+          return;
+        }
+
+        // Always include messages with tool calls
+        if (message.toolCalls && message.toolCalls.length > 0) {
+          uniqueMessages.push(message);
+          return;
+        }
+
+        // For assistant messages without tool calls, check for duplicates
+        const content = message.content.trim();
+
+        // If we've seen this exact content before, skip it
+        if (seenContent.has(content)) {
+          console.log('Skipping duplicate message:', content.substring(0, 30) + '...');
+          return;
+        }
+
+        // Otherwise, add it to our tracking and to the output array
+        seenContent.add(content);
+        uniqueMessages.push(message);
+      });
+
+      return uniqueMessages;
+    }, [chatMessages]);
+
     return (
       <div className="chat-messages" ref={chatContainerRef}>
         {chatMessages.length === 0 && (
@@ -189,7 +231,7 @@ const ChatMessages = memo(
           </div>
         )}
 
-        {chatMessages.map((message, index) => (
+        {deduplicatedMessages.map((message, index) => (
           <Message
             key={index}
             message={message}
