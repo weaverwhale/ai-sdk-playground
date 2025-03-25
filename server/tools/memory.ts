@@ -191,7 +191,6 @@ async function searchMemories(
     const queryEmbedding = await generateEmbedding(query);
 
     // Search for similar embeddings
-    // @ts-ignore - Types don't match, but it works at runtime
     const searchResults = vectorIndex.searchKnn(queryEmbedding, limit * 2);
 
     // Find relevant memory IDs and create results with similarity scores
