@@ -52,6 +52,13 @@ export const modelProviders: ModelProvider[] = [
   //   defaultSystemPrompt
   // },
   {
+    id: 'gpt-4.5-preview',
+    name: 'GPT-4.5 Preview (OpenAI)',
+    available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
+    model: openai('gpt-4.5-preview'),
+    defaultSystemPrompt,
+  },
+  {
     id: 'claude-3-5-sonnet',
     name: 'Claude 3.5 Sonnet (Anthropic)',
     available: checkApiKey(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC'),
