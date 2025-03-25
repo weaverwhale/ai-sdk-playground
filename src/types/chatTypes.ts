@@ -90,6 +90,7 @@ export interface UseChatbotMessagesResult {
   searchPlan?: SearchPlan;
   isDeepSearchMode: boolean;
   isCreatingPlan: boolean;
+  isExecutingPlan: boolean;
 }
 
 // Server monitoring hook result type
@@ -119,6 +120,7 @@ export type ChatAction =
   | { type: 'UPDATE_FINAL_RESPONSE'; payload: { content: string; conversationTurn: number } }
   | { type: 'INCREMENT_CONVERSATION_TURN' }
   | { type: 'SET_SEARCH_PLAN'; plan: SearchPlan; conversationTurn: number }
+  | { type: 'CLEAR_SEARCH_PLAN' }
   | {
       type: 'UPDATE_PLAN_STEP';
       payload: {
@@ -174,6 +176,7 @@ export interface ChatMessagesProps {
   searchPlan?: SearchPlan;
   isDeepSearchMode: boolean;
   isCreatingPlan: boolean;
+  isExecutingPlan: boolean;
 }
 
 export interface SearchPlanProps {

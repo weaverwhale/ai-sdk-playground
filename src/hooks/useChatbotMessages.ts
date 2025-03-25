@@ -537,6 +537,14 @@ export function useChatbotMessages({
           type: 'INCREMENT_CONVERSATION_TURN',
         });
 
+        // Clear any existing search plan when a new question is asked
+        dispatch({
+          type: 'CLEAR_SEARCH_PLAN',
+        });
+
+        // Reset the final response flag for the new question
+        hasAddedFinalResponseRef.current = false;
+
         try {
           // Clear input immediately after submitting
           setInput('');
@@ -638,5 +646,6 @@ export function useChatbotMessages({
     searchPlan: chatState.searchPlan,
     isDeepSearchMode,
     isCreatingPlan,
+    isExecutingPlan,
   };
 }

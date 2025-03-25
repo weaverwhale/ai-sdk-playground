@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -175,6 +175,7 @@ const ChatMessages = memo(
     searchPlan,
     isDeepSearchMode,
     isCreatingPlan,
+    isExecutingPlan,
   }: ChatMessagesProps) => {
     // Deduplicate messages before rendering
     // This specifically addresses the issue with duplicate messages after tool calls
@@ -259,20 +260,24 @@ const ChatMessages = memo(
         )}
 
         {/* Only show thinking animation if we don't already have a streaming response */}
-        {((isDeepSearchMode && searchPlan) || status === 'submitted') && !onFinalResponse && (
-          <div className="message assistant">
-            <div className="message-content">
-              <div className="thinking-animation">
-                <span className="thinking-text">Thinking</span>
-                <div className="thinking-dots">
-                  <span></span>
-                  <span></span>
-                  <span></span>
+        {((isDeepSearchMode && (isExecutingPlan || (searchPlan && !searchPlan.summary))) ||
+          status === 'submitted') &&
+          !onFinalResponse && (
+            <div className="message assistant">
+              <div className="message-content">
+                <div className="thinking-animation">
+                  <span className="thinking-text">
+                    {isDeepSearchMode && isExecutingPlan ? 'Executing search plan' : 'Thinking'}
+                  </span>
+                  <div className="thinking-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {error && (
           <div className="message error">
@@ -331,6 +336,7 @@ const Chatbot: React.FC = () => {
     clearConversation,
     searchPlan,
     isCreatingPlan,
+    isExecutingPlan,
   } = useChatbotMessages({
     selectedModel,
     isDeepSearchMode,
@@ -449,6 +455,7 @@ const Chatbot: React.FC = () => {
           searchPlan={searchPlan}
           isDeepSearchMode={isDeepSearchMode}
           isCreatingPlan={isCreatingPlan}
+          isExecutingPlan={isExecutingPlan}
         />
 
         {/* Display search plan if in deep search mode and plan exists */}

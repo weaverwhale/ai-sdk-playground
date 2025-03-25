@@ -307,6 +307,14 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       };
     }
 
+    case 'CLEAR_SEARCH_PLAN': {
+      console.log('[CHAT REDUCER] Clearing search plan');
+      return {
+        ...state,
+        searchPlan: undefined,
+      };
+    }
+
     default:
       return state;
   }
