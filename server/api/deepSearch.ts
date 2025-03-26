@@ -281,6 +281,7 @@ export async function executeSearchPlan(
         const result = await handleChatRequest({
           messages: [
             {
+              id: `${workingPlan.createdAt}-${step.id}`,
               role: 'user',
               content: `
               Execute this search step: "${step.description}"
