@@ -66,43 +66,28 @@ export async function handleChatRequest(body: ChatRequest) {
                   5,
                 );
 
-                console.log(`[API] Memory search result type: ${typeof memorySearchResult}`);
-
                 // Defensive parsing for memory search results
                 if (typeof memorySearchResult === 'string') {
                   try {
                     // Try to parse if it's a string
                     memories = JSON.parse(memorySearchResult);
-                    console.log(`[API] Parsed memory search results from string`);
-                  } catch (parseErr) {
-                    console.error('[API] Failed to parse memory search results:', parseErr);
-                    memories = [];
+                  } catch {
+                    // Continue without memories
                   }
                 } else if (Array.isArray(memorySearchResult)) {
                   // Already an array, use directly
                   memories = memorySearchResult;
-                  console.log(`[API] Memory search returned array directly`);
                 } else if (memorySearchResult && typeof memorySearchResult === 'object') {
                   // Check if it's an object with a results property
                   if (Array.isArray(memorySearchResult.results)) {
                     memories = memorySearchResult.results;
-                    console.log(`[API] Extracted results array from memory search object`);
                   } else {
-                    console.log(
-                      `[API] Memory search returned object without results array`,
-                      memorySearchResult,
-                    );
                     memories = [];
                   }
                 } else {
-                  console.log(
-                    `[API] Memory search returned unexpected result type:`,
-                    memorySearchResult,
-                  );
                   memories = [];
                 }
-              } catch (memoryCriticalError) {
-                console.error('[API] Critical error in memory search:', memoryCriticalError);
+              } catch {
                 // Ensure we have a valid (empty) array even on error
                 memories = [];
               }
@@ -110,12 +95,7 @@ export async function handleChatRequest(body: ChatRequest) {
               // Safety check on memories - ensure it's always an array for safety
               memories = Array.isArray(memories) ? memories : [];
 
-              // Log memory count after normalization
-              console.log(`[API] Processing ${memories.length} memories after normalization`);
-
               if (memories.length > 0) {
-                console.log(`[API] Found ${memories.length} initial memories before filtering`);
-
                 try {
                   // Get previous exchanges to avoid duplication
                   const recentExchanges = new Set<string>();
@@ -132,39 +112,28 @@ export async function handleChatRequest(body: ChatRequest) {
                     }
                   }
 
-                  console.log(
-                    `[API] Identified ${recentExchanges.size} recent exchanges to avoid repeating`,
-                  );
-
                   // Filter out memories that match any recent messages
                   // Additional safety: Skip any memories that don't have expected properties
                   const filteredMemories = memories.filter((memory) => {
                     try {
                       // Safely extract content from memory string (format: "role: content")
                       if (!memory) {
-                        console.log('[API] Skipping null or undefined memory item');
                         return false;
                       }
 
                       // Verify this is an object with a content property
                       if (typeof memory !== 'object' || !memory.content) {
-                        console.log(
-                          '[API] Skipping memory without content property:',
-                          typeof memory === 'object' ? JSON.stringify(memory) : String(memory),
-                        );
                         return false;
                       }
 
                       // Ensure content is a string
                       if (typeof memory.content !== 'string') {
-                        console.log('[API] Memory has non-string content:', typeof memory.content);
                         return false;
                       }
 
                       const contentParts = memory.content.split(': ');
                       // If we can't properly split the content, skip this memory
                       if (contentParts.length < 2) {
-                        console.log('[API] Memory has invalid format, skipping:', memory.content);
                         return false;
                       }
 
@@ -173,7 +142,6 @@ export async function handleChatRequest(body: ChatRequest) {
 
                       // Skip empty content
                       if (!memoryContent) {
-                        console.log('[API] Memory has empty content, skipping');
                         return false;
                       }
 
@@ -183,12 +151,6 @@ export async function handleChatRequest(body: ChatRequest) {
                         if (!recentContent) continue;
 
                         if (memoryContent === recentContent) {
-                          console.log(
-                            `[API] Filtering out memory that matches recent exchange: ${memoryContent.substring(
-                              0,
-                              30,
-                            )}...`,
-                          );
                           return false;
                         }
                       }
@@ -199,12 +161,6 @@ export async function handleChatRequest(body: ChatRequest) {
                         memoryRole === 'assistant' &&
                         (memoryContent.includes('✅') || memoryContent.includes('Calling'))
                       ) {
-                        console.log(
-                          `[API] Filtering out tool response memory: ${memoryContent.substring(
-                            0,
-                            30,
-                          )}...`,
-                        );
                         return false;
                       }
 
@@ -217,6 +173,10 @@ export async function handleChatRequest(body: ChatRequest) {
                   });
 
                   if (filteredMemories.length > 0) {
+                    console.log(
+                      `[Memory] Found ${filteredMemories.length} memories for user ${userId}`,
+                    );
+
                     try {
                       // Generate memory context string safely with better error reporting
                       const memoryItems = [];
@@ -236,42 +196,24 @@ export async function handleChatRequest(body: ChatRequest) {
                         memoryContext =
                           '\n\nRelevant information from previous conversations:\n' +
                           memoryItems.join('\n');
-                        console.log(
-                          `[API] Using ${memoryItems.length} memories for context after filtering`,
-                        );
-                        console.log(`[API] Memory context:\n${memoryContext}`);
-                      } else {
-                        console.log(`[API] No valid memory items found after filtering`);
                       }
-                    } catch (formatError) {
-                      console.error('[API] Error formatting memory context:', formatError);
+                    } catch {
                       memoryContext = ''; // Reset on error
                     }
-                  } else {
-                    console.log(
-                      `[API] No relevant memories found after filtering for user ${userId}`,
-                    );
                   }
-                } catch (filterError) {
-                  console.error('[API] Error in memory filtering process:', filterError);
-                  // Continue without memory context
+                } catch {
+                  // Continue without memories
                 }
-              } else {
-                console.log(`[API] No relevant memories found for user ${userId}`);
               }
-            } catch (searchError) {
-              console.error('[API] Error searching memories:', searchError);
-              // Continue without memory context
+            } catch {
+              // Continue without memories
             }
           }
-        } catch (memoryError) {
-          console.error('[API] Error in memory processing:', memoryError);
+        } catch {
           // Continue without memories
         }
       }
-    } catch (contextError) {
-      console.error('[API] Critical error in memory context generation:', contextError);
-      // If we fail completely, continue with empty memory context
+    } catch {
       memoryContext = '';
     }
 
