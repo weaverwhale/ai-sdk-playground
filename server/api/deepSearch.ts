@@ -1,8 +1,8 @@
-import { generateObject, type LanguageModelV1, type Message } from 'ai';
+import { generateObject, type LanguageModelV1 } from 'ai';
 import { z } from 'zod';
 import { getModelProviderById, ModelProvider } from '../modelProviders';
 import { handleChatRequest } from './chat';
-import { defaultSystemPrompt } from '../prompt';
+import { orchestratorSystemPrompt, summarizerSystemPrompt } from '../prompt';
 
 // Global store for search plans
 // This needs to be exported so it can be used by the server
@@ -156,16 +156,12 @@ async function createSearchPlan(query: string, orchestratorModel: AIModel): Prom
         ),
         complexity: z.enum(['low', 'medium', 'high']),
       }),
-      system: `
-      ${defaultSystemPrompt}
-      **Instructions:**
-      You are a strategic search planner that breaks down complex queries into a step-by-step plan.
-      `,
-      prompt: `Analyze this search query and create a detailed plan to answer it:
-      "${query}"
-      
+      system: orchestratorSystemPrompt,
+      prompt: `
+      Analyze this search query and create a detailed plan to answer it: "${query}"
       Break this down into sequential steps that would help thoroughly answer the query.
-      Each step should be specific and actionable.`,
+      Each step should be specific and actionable.
+      `,
     });
 
     // Create a fixed identifier for this plan
@@ -402,8 +398,7 @@ export async function executeSearchPlan(
               .string()
               .describe('A comprehensive summary of all the findings from the search steps'),
           }),
-          system:
-            'You are an expert at summarizing complex search findings into concise, actionable insights.',
+          system: summarizerSystemPrompt,
           prompt: `Provide a comprehensive summary of the findings from this deep search:
           
           Original Query: "${finalPlan.query}"

@@ -455,6 +455,7 @@ export function useChatbotMessages({
       setErrorDetails(null);
       setHistoryIndex(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedModel, messages.length, resetInternalState]);
 
   // Event handlers with useCallback
@@ -618,7 +619,7 @@ export function useChatbotMessages({
     setInput('');
     setErrorDetails(null);
     setHistoryIndex(null);
-  }, [resetInternalState]);
+  }, [resetInternalState, setInput]);
 
   // Combine errors
   const combinedErrorDetails = deepSearchError

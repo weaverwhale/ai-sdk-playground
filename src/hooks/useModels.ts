@@ -54,7 +54,8 @@ export function useModels(): UseModelsResult {
     } catch {
       setModelError('Failed to fetch available AI models. Please try again later.');
     }
-  }, []); // Removed selectedModel dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     availableModels,
