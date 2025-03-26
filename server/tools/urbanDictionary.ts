@@ -29,7 +29,7 @@ const urbanDictionary = {
       let text = '';
       const rootElement = 'body';
 
-      $(`${rootElement} *`)
+      $(`${rootElement} main *`)
         .not('style, script, svg')
         .each((_i: number, elem) => {
           let content = $(elem).clone().children().remove().end().text().trim();
