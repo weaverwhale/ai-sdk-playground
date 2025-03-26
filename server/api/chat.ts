@@ -286,19 +286,25 @@ export async function handleChatRequest(body: ChatRequest) {
       messagesWithSystem = [...body.messages];
     }
 
-    const computedTools = modelId === 'gemini' ? geminiTools : tools;
+    // Select appropriate tools based on model
+    const computedTools = modelId.includes('gemini') ? geminiTools : tools;
 
     // Process the request with the model
     let result;
     if (isStream) {
-      result = streamText({
-        model,
-        tools: computedTools,
-        messages: messagesWithSystem,
-        maxTokens: 5000,
-        experimental_continueSteps: true,
-        maxSteps: 10,
-      });
+      try {
+        result = streamText({
+          model,
+          tools: computedTools,
+          messages: messagesWithSystem,
+          maxTokens: 5000,
+          experimental_continueSteps: true,
+          maxSteps: 10,
+        });
+      } catch (streamError) {
+        console.error(`[API] Stream error with model ${modelId}:`, streamError);
+        throw streamError;
+      }
 
       // Store the conversation in memory in the background - failures here are non-critical
       if (userId !== 'anonymous') {
@@ -331,11 +337,16 @@ export async function handleChatRequest(body: ChatRequest) {
 
       return result.toDataStreamResponse();
     } else {
-      result = await generateText({
-        model,
-        tools: computedTools,
-        messages: messagesWithSystem,
-      });
+      try {
+        result = await generateText({
+          model,
+          tools: computedTools,
+          messages: messagesWithSystem,
+        });
+      } catch (generateError) {
+        console.error(`[API] Generate text error with model ${modelId}:`, generateError);
+        throw generateError;
+      }
 
       // Store the conversation in memory in the background - failures here are non-critical
       if (userId !== 'anonymous') {
