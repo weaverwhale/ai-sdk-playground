@@ -1,0 +1,46 @@
+.generative-ui-container {
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  margin-top: 0.5rem;
+  background-color: var(--secondary-bg-color);
+  overflow-x: auto;
+}
+
+.generative-ui-container p {
+  margin-bottom: 0.5rem;
+}
+
+.generative-ui-container ul,
+.generative-ui-container ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.generative-ui-container li {
+  margin-bottom: 0.25rem;
+}
+
+.generative-ui-error {
+  border: 1px solid var(--warning-color);
+  background-color: var(--warning-bg-color);
+  color: var(--warning-text-color);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  margin-top: 0.5rem;
+}
+
+.generative-ui-error p {
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.generative-ui-error pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}

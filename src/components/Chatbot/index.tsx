@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import MermaidDiagram from '../MermaidDiagram';
 import SearchPlanDisplay from '../SearchPlanDisplay';
+import GenerativeUIDisplay from '../GenerativeUIDisplay';
 import type { Components } from 'react-markdown';
 import { useChatbotMessages } from '../../hooks/useChatbotMessages';
 import { useServerMonitoring } from '../../hooks/useServerMonitoring';
@@ -18,7 +19,6 @@ import { useUserInfo } from '../../hooks/useUserInfo';
 
 import './index.css';
 
-// Create a more permissive code component for ReactMarkdown
 const CodeBlock: Components['code'] = (props) => {
   const { className, children } = props;
   const language = className ? className.replace('language-', '') : '';
@@ -37,14 +37,46 @@ const CodeBlock: Components['code'] = (props) => {
   );
 };
 
-// Extracted Message component to improve readability
 const Message = memo(
   ({ message, expandedTools, toolOptions, toggleToolExpansion, messageIndex }: MessageProps) => {
     const toolCalls = message.toolCalls || [];
     const isToolInProgress = message.isToolInProgress;
+    const content = message.content.trim();
+
+    // Check for pure JSX content
+    const isGenerativeUI = content.startsWith('<') && content.endsWith('>');
+
+    // Check for JSX in code blocks
+    const jsxCodeBlockRegex = /```(?:jsx|tsx)?\s*\n((?:<.*?>[\s\S]*<\/.*?>)|(?:<.*?\/>\s*))\n```/g;
+    const hasJsxCodeBlock = jsxCodeBlockRegex.test(content);
+
+    // Extract JSX code from code blocks if present
+    const extractJsxFromCodeBlock = (text: string) => {
+      const matches: string[] = [];
+      const regex = /```(?:jsx|tsx)?\s*\n((?:<.*?>[\s\S]*<\/.*?>)|(?:<.*?\/>\s*))\n```/g;
+      let match;
+
+      // Clone the content for ReactMarkdown rendering
+      let markdownContent = text;
+
+      while ((match = regex.exec(text)) !== null) {
+        if (match[1]) {
+          matches.push(match[1]);
+
+          // Replace JSX code blocks with placeholders in the markdown content
+          markdownContent = markdownContent.replace(match[0], `[JSX Component ${matches.length}]`);
+        }
+      }
+
+      return { matches, markdownContent };
+    };
+
+    const { matches: jsxSnippets, markdownContent } = hasJsxCodeBlock
+      ? extractJsxFromCodeBlock(content)
+      : { matches: [], markdownContent: content };
 
     // Skip empty assistant messages
-    if (message.role === 'assistant' && !message.content.trim() && toolCalls.length === 0) {
+    if (message.role === 'assistant' && !content && toolCalls.length === 0) {
       return null;
     }
 
@@ -62,17 +94,40 @@ const Message = memo(
         )}
 
         {/* Display message content after tool calls */}
-        {message.content.trim() && (
+        {content && (
           <div className="message-content">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
-              components={{
-                code: CodeBlock,
-              }}
-            >
-              {message.content}
-            </ReactMarkdown>
+            {isGenerativeUI ? (
+              <GenerativeUIDisplay jsxString={content} />
+            ) : hasJsxCodeBlock ? (
+              <>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                  components={{
+                    code: CodeBlock,
+                  }}
+                >
+                  {markdownContent}
+                </ReactMarkdown>
+
+                {jsxSnippets.map((jsxString, index) => (
+                  <div key={index} className="jsx-preview mt-4 mb-4">
+                    <div className="jsx-preview-label mb-2 text-sm text-gray-500">JSX Preview:</div>
+                    <GenerativeUIDisplay jsxString={jsxString} />
+                  </div>
+                ))}
+              </>
+            ) : (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  code: CodeBlock,
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
+            )}
           </div>
         )}
 
@@ -142,12 +197,19 @@ const ToolCallsDisplay = memo(
                     <div className="tool-section-label">Arguments:</div>
                     <pre>{JSON.stringify(toolCall.args, null, 2)}</pre>
                   </div>
-                  {toolCall.output && (
+                  {toolCall.output &&
+                  toolCall.name === 'generativeUi' &&
+                  toolCall.output.trim().startsWith('<') ? (
+                    <div className="tool-output">
+                      <div className="tool-section-label">Generated UI:</div>
+                      <GenerativeUIDisplay jsxString={toolCall.output} />
+                    </div>
+                  ) : toolCall.output ? (
                     <div className="tool-output">
                       <div className="tool-section-label">Output:</div>
                       <pre>{toolCall.output}</pre>
                     </div>
-                  )}
+                  ) : null}
                 </>
               )}
             </div>
