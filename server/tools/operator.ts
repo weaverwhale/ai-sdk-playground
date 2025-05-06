@@ -20,7 +20,7 @@ const operator = {
       ),
     action: z.string().describe('The action to perform on the website.'),
   }),
-  execute: async ({ website, action }: OperatorParams): Promise<string> => {
+  execute: async ({ website, action }: OperatorParams) => {
     console.log(`[Operator Tool] Request received. Visiting ${website} and performing "${action}"`);
 
     try {
