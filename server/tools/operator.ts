@@ -35,6 +35,7 @@ const operator = {
       });
 
       const result = await openator.start(website || 'https://google.com', action);
+      console.log(`[Operator Tool] Result: ${result}`);
 
       return result;
     } catch (error) {
