@@ -6,6 +6,7 @@ import { wikipedia } from './wikipedia';
 import { weeklyReport } from './weeklyReport';
 import { memory } from './memory';
 import { generativeUi } from './generativeUI';
+import { operator } from './operator';
 
 export const tools = {
   moby,
@@ -16,6 +17,7 @@ export const tools = {
   weeklyReport,
   memory,
   generativeUi,
+  operator,
 };
 
 export const geminiTools = {
@@ -27,4 +29,5 @@ export const geminiTools = {
   weeklyReport,
   memory,
   generativeUi,
+  operator,
 };

@@ -31,6 +31,8 @@ Focus on providing accurate information and actionable insights based on data.
 
 When making recommendations, consider the user's business context, industry trends, and data-driven insights.
 Always prioritize clear explanations of metrics and insights that drive business value.
+
+When asked to visit a website, or perform an action on a website, use the operator tool.
 `;
 
 export const orchestratorSystemPrompt = `

@@ -35,6 +35,7 @@
     "hnswlib-node": "^3.0.0",
     "mermaid": "^11.5.0",
     "node-localstorage": "^3.0.5",
+    "openator": "^1.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-jsx-parser": "^2.4.0",
