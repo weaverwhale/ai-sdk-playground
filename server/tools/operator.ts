@@ -11,7 +11,7 @@ type OperatorParams = {
 const operator = {
   id: 'operator',
   name: 'Operator',
-  description: 'Visit a website and perform an action.',
+  description: 'Visit a website and perform an action. Should not do more than 5 tasks.',
   parameters: z.object({
     website: z
       .string()
@@ -31,7 +31,7 @@ const operator = {
 
       const openator = initOpenator({
         llm,
-        headless: false,
+        headless: true,
       });
 
       const result = await openator.start(website || 'https://google.com', action);
