@@ -11,7 +11,7 @@ type OperatorParams = {
 const operator = {
   id: 'operator',
   name: 'Operator',
-  description: 'Visit a website and perform an action. Should not do more than 5 tasks.',
+  description: 'Visit a website and perform an action.',
   parameters: z.object({
     website: z
       .string()
