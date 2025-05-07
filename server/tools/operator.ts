@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { initOpenator, ChatOpenAI } from 'openator';
 
-const OPERATOR_MODEL_ID = 'gpt-4o';
+const OPERATOR_MODEL_ID = 'gpt-4o-mini';
 
 type OperatorParams = {
   website: string;
@@ -35,7 +35,7 @@ const operator = {
       });
 
       const result = await openator.start(website || 'https://google.com', action);
-      console.log(`[Operator Tool] Result: ${result}`);
+      console.log(`[Operator Tool] Result: ${JSON.stringify(result)}`);
 
       return result;
     } catch (error) {
