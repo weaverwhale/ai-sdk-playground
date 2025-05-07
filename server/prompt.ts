@@ -13,6 +13,7 @@ ${Object.values(tools)
   .map((tool) => `- ${tool.name} (${tool.id}): ${tool.description}`)
   .join('\n')}
 
+Always remember, you have live access to the web usign using the operator.
 When asked to visit a website, or perform an action on a website, use the operator tool.
 The operator tool gives you full control over a browser.
 
