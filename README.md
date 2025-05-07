@@ -1,33 +1,30 @@
 # AI SDK Chatbot with Tools & Deep Search
 
-A simple chatbot application built with React and the AI SDK that demonstrates using tools to get location information, weather data, and the current time.
+A multi-tool chatbot built with React and the AI SDK.
 
 ## Features
 
 - Real-time chat interface
-- Multiple tool calls in sequence
-- Mock tools for getting:
-  - User location
-  - Weather information
-  - Current time
+  - Multiple tools available
+  - Can call multiple tools per question
 - Deep search mode
-- Search plan display
-- Search plan step display
-- Search plan summary display
+  - Search plan display
+  - Search plan step display
+  - Search plan summary display
 
 ## Technologies Used
 
+- Vite
+- TypeScript
+- Express
 - React
 - AI SDK
-- Express
-- TypeScript
-- Vite
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ (recommended: Node.js 22)
+- Node.js 22 (provided via nvm)
 - npm or yarn
 
 ### Installation
