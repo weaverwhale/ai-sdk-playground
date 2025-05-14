@@ -150,10 +150,10 @@ export const modelProviders: ModelProvider[] = [
   //   defaultSystemPrompt
   // },
   {
-    id: 'llama-3.2-3b-instruct',
-    name: 'Llama 3.2 3B (LMStudio)',
+    id: 'gemma-3-4b-it-qat',
+    name: 'Gemma 3 4B (LMStudio)',
     available: true,
-    model: lmstudio('llama-3.2-3b-instruct'),
+    model: lmstudio('gemma-3-4b-it-qat'),
     defaultSystemPrompt,
   },
   {
@@ -161,6 +161,20 @@ export const modelProviders: ModelProvider[] = [
     name: 'Qwen 3.1 1.7B (LMStudio)',
     available: true,
     model: lmstudio('qwen3-1.7b'),
+    defaultSystemPrompt,
+  },
+  {
+    id: 'qwen3-4b',
+    name: 'Qwen 3.1 4B (LMStudio)',
+    available: true,
+    model: lmstudio('qwen3-4b'),
+    defaultSystemPrompt,
+  },
+  {
+    id: 'mistral-nemo-instruct-2407',
+    name: 'Mistral Nemo Instruct (LMStudio)',
+    available: true,
+    model: lmstudio('mistral-nemo-instruct-2407'),
     defaultSystemPrompt,
   },
 ];
