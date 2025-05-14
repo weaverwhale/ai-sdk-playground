@@ -164,13 +164,6 @@ export const modelProviders: ModelProvider[] = [
     defaultSystemPrompt,
   },
   {
-    id: 'qwen3-4b',
-    name: 'Qwen 3.1 4B (LMStudio)',
-    available: true,
-    model: lmstudio('qwen3-4b'),
-    defaultSystemPrompt,
-  },
-  {
     id: 'mistral-nemo-instruct-2407',
     name: 'Mistral Nemo Instruct (LMStudio)',
     available: true,
