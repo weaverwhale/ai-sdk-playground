@@ -5,6 +5,7 @@ import { groq } from '@ai-sdk/groq';
 import { deepseek } from '@ai-sdk/deepseek';
 import { cerebras } from '@ai-sdk/cerebras';
 import { google } from '@ai-sdk/google';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 // import { createVertex } from '@ai-sdk/google-vertex';
 import { defaultSystemPrompt } from './prompt';
 
@@ -12,6 +13,11 @@ import { defaultSystemPrompt } from './prompt';
 //   project: 'shofifi',
 //   location: 'us-east5',
 // })
+
+const lmstudio = createOpenAICompatible({
+  name: 'lmstudio',
+  baseURL: 'http://localhost:1234/v1',
+});
 
 export interface ModelProvider {
   id: string;
@@ -142,7 +148,28 @@ export const modelProviders: ModelProvider[] = [
   //   available: true,
   //   model: vertex('gemini-2.0-flash-001'),
   //   defaultSystemPrompt
-  // }
+  // },
+  {
+    id: 'qwen2.5-vl-3b-instruct',
+    name: 'Qwen 2.5 VL 3B (LMStudio)',
+    available: true,
+    model: lmstudio('qwen2.5-vl-3b-instruct'),
+    defaultSystemPrompt,
+  },
+  {
+    id: 'qwen2-1.7b',
+    name: 'Qwen 3.1 1.7B (LMStudio)',
+    available: true,
+    model: lmstudio('qwen3-1.7b'),
+    defaultSystemPrompt,
+  },
+  {
+    id: 'llama-3.2-3b-instruct',
+    name: 'Llama 3.2 3B (LMStudio)',
+    available: true,
+    model: lmstudio('llama-3.2-3b-instruct'),
+    defaultSystemPrompt,
+  },
 ];
 
 export function getModelProviderById(id: string): ModelProvider | undefined {
