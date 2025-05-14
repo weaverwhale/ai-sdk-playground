@@ -150,24 +150,17 @@ export const modelProviders: ModelProvider[] = [
   //   defaultSystemPrompt
   // },
   {
-    id: 'qwen2.5-vl-3b-instruct',
-    name: 'Qwen 2.5 VL 3B (LMStudio)',
-    available: true,
-    model: lmstudio('qwen2.5-vl-3b-instruct'),
-    defaultSystemPrompt,
-  },
-  {
-    id: 'qwen2-1.7b',
-    name: 'Qwen 3.1 1.7B (LMStudio)',
-    available: true,
-    model: lmstudio('qwen3-1.7b'),
-    defaultSystemPrompt,
-  },
-  {
     id: 'llama-3.2-3b-instruct',
     name: 'Llama 3.2 3B (LMStudio)',
     available: true,
     model: lmstudio('llama-3.2-3b-instruct'),
+    defaultSystemPrompt,
+  },
+  {
+    id: 'qwen3-1.7b',
+    name: 'Qwen 3.1 1.7B (LMStudio)',
+    available: true,
+    model: lmstudio('qwen3-1.7b'),
     defaultSystemPrompt,
   },
 ];
