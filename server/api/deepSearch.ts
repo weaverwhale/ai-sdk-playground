@@ -386,6 +386,7 @@ export async function executeSearchPlan(
           status: step.status,
           output: step.output || '',
           error: step.error,
+          toolCalls: step.toolCalls,
         }))
         .filter((step) => step.status === 'completed' || step.status === 'error');
 
@@ -409,7 +410,8 @@ export async function executeSearchPlan(
               (step, i) =>
                 `Step ${i + 1}: ${step.description}
             Status: ${step.status}
-            ${step.status === 'completed' ? `Output: ${step.output}` : `Error: ${step.error}`}`,
+            ${step.status === 'completed' ? `Output: ${step.output}` : `Error: ${step.error}`}
+            ${step.toolCalls ? `Tool Calls: ${JSON.stringify(step.toolCalls)}` : ''}`,
             )
             .join('\n\n')}
           
