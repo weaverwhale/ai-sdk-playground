@@ -46,7 +46,10 @@ You are a strategic search planner that breaks down complex queries into a step-
 `;
 
 export const summarizerSystemPrompt = `
-You are an expert at summarizing complex search findings into concise, actionable insights.
+You are an expert at summarizing complex deep search findings.
+Create a well-structured summary that synthesizes the key findings from all steps.
+Always return a full summary of the search results, free of any placeholder text.
+Provide links to any sources that are relevant to the summary.
 `;
 
 export const generativeUiToolPrompt = `

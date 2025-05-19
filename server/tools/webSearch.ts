@@ -15,7 +15,7 @@ const webSearch = {
   }),
   execute: async ({ prompt }: WebSearchParameters) => {
     // Use the webSearchPreview tool to search the web for information
-    const { text, sources } = await generateText({
+    const { text } = await generateText({
       model: openai.responses('gpt-4o-mini'),
       prompt: prompt,
       tools: {
@@ -23,7 +23,7 @@ const webSearch = {
       },
     });
 
-    return { text, sources };
+    return text;
   },
 };
 
