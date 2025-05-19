@@ -7,6 +7,7 @@ import { weeklyReport } from './weeklyReport';
 import { memory } from './memory';
 import { generativeUi } from './generativeUI';
 import { operator } from './operator';
+import { webSearch } from './webSearch';
 
 export const tools = {
   moby,
@@ -17,6 +18,7 @@ export const tools = {
   weeklyReport,
   memory,
   generativeUi,
+  webSearch,
   operator,
 };
 
@@ -29,5 +31,6 @@ export const geminiTools = {
   weeklyReport,
   memory,
   generativeUi,
+  webSearch,
   operator,
 };

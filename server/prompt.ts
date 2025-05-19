@@ -13,9 +13,11 @@ ${Object.values(tools)
   .map((tool) => `- ${tool.name} (${tool.id}): ${tool.description}`)
   .join('\n')}
 
-Always remember, you have live access to the web usign using the operator.
-When asked to visit a website, or perform an action on a website, use the operator tool.
-The operator tool gives you full control over a browser.
+Always remember, you have live access to the web using the web search tool.
+When asked to gather live information, or do research, use the web search tool.
+
+You also have access to the operator tool, which gives you full control over a web browser.
+Use operator over web search when you need to perform actions on a website.
 
 Whenever you are asked for any e-commerce analytics question, you should use the Moby tool.
 Ask Moby directly, never provide "ask moby" in your question.
