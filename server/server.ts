@@ -11,6 +11,7 @@ import {
   searchPlans,
   executeSearchPlan,
 } from '../server/api/deepSearch';
+import { handleArchitectureRequest } from '../server/api/architecture';
 import { Readable } from 'stream';
 import { getAvailableModelProviders, getModelProviderById } from './modelProviders';
 
@@ -38,6 +39,19 @@ app.get('/api/health', (_req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
   });
+});
+
+// architecture data
+app.get('/api/architecture', async (req, res) => {
+  try {
+    await handleArchitectureRequest(req, res);
+  } catch (error) {
+    console.error('[SERVER] Architecture API error:', error);
+    res.status(500).json({
+      error: 'Failed to generate architecture data',
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
 });
 
 // models
