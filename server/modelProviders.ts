@@ -6,13 +6,13 @@ import { deepseek } from '@ai-sdk/deepseek';
 import { cerebras } from '@ai-sdk/cerebras';
 import { google } from '@ai-sdk/google';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-// import { createVertex } from '@ai-sdk/google-vertex';
+import { createVertex } from '@ai-sdk/google-vertex';
 import { defaultSystemPrompt } from './prompt';
 
-// const vertex = createVertex({
-//   project: 'shofifi',
-//   location: 'us-east5',
-// })
+const vertex = createVertex({
+  project: 'shofifi',
+  location: 'us-east5',
+});
 
 const lmstudio = createOpenAICompatible({
   name: 'lmstudio',
@@ -50,18 +50,11 @@ export const modelProviders: ModelProvider[] = [
     model: openai('gpt-4o'),
     defaultSystemPrompt,
   },
-  // {
-  //   id: 'o3-mini',
-  //   name: 'o3 Mini (OpenAI)',
-  //   available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
-  //   model: openai('o3-mini'),
-  //   defaultSystemPrompt
-  // },
   {
-    id: 'gpt-4.5-preview',
-    name: 'GPT-4.5 Preview (OpenAI)',
+    id: 'gpt-4.1',
+    name: 'GPT-4.1 (OpenAI)',
     available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
-    model: openai('gpt-4.5-preview'),
+    model: openai('gpt-4.1'),
     defaultSystemPrompt,
   },
   {
@@ -92,13 +85,6 @@ export const modelProviders: ModelProvider[] = [
     model: groq('qwen-2.5-32b'),
     defaultSystemPrompt,
   },
-  // {
-  //   id: 'groq-qwen-32b-instruct',
-  //   name: 'Qwen 32B (Groq)',
-  //   available: checkApiKey(process.env.GROQ_API_KEY, 'GROQ'),
-  //   model: groq('qwen-32b-instruct'),
-  //   defaultSystemPrompt
-  // },
   {
     id: 'groq-gemma-2-9b-it',
     name: 'Gemma 2 9B (Groq)',
@@ -106,13 +92,6 @@ export const modelProviders: ModelProvider[] = [
     model: groq('gemma2-9b-it'),
     defaultSystemPrompt,
   },
-  // {
-  //   id: 'deepseek-r1-distill-llama-70b',
-  //   name: 'R1 Distill Llama 70B (DeepSeek)',
-  //   available: checkApiKey(process.env.DEEPSEEK_API_KEY, 'DEEPSEEK'),
-  //   model: deepseek('r1-distill-llama-70b'),
-  //   defaultSystemPrompt
-  // },
   {
     id: 'deepseek-chat',
     name: 'DeepSeek Chat (DeepSeek)',
@@ -130,25 +109,29 @@ export const modelProviders: ModelProvider[] = [
   },
   {
     id: 'gemini-flash',
-    name: 'Gemini 2.0 Flash (Google)',
+    name: 'Gemini 2.5 Flash (Google)',
     available: checkApiKey(process.env.GOOGLE_GENERATIVE_AI_API_KEY, 'GEMINI'),
-    model: google('gemini-2.0-flash'),
+    model: google('gemini-2.5-flash-001', {
+      useSearchGrounding: true,
+    }),
     defaultSystemPrompt,
   },
   {
-    id: 'gemini-2.5-pro-exp-03-25',
+    id: 'gemini-2.5-pro-exp-05-06',
     name: 'Gemini 2.5 Pro (Google)',
     available: checkApiKey(process.env.GOOGLE_GENERATIVE_AI_API_KEY, 'GEMINI'),
-    model: google('gemini-2.5-pro-exp-03-25'),
+    model: google('gemini-2.5-pro-exp-05-06', {
+      useSearchGrounding: true,
+    }),
     defaultSystemPrompt,
   },
-  // {
-  //   id: 'gemini-vertex',
-  //   name: 'Gemini 2.0 Flash Vertex (Google)',
-  //   available: true,
-  //   model: vertex('gemini-2.0-flash-001'),
-  //   defaultSystemPrompt
-  // },
+  {
+    id: 'gemini-vertex',
+    name: 'Gemini 2.0 Flash Vertex (Google)',
+    available: true,
+    model: vertex('gemini-2.5-flash-001'),
+    defaultSystemPrompt,
+  },
   {
     id: 'gemma-3-4b-it-qat',
     name: 'Gemma 3 4B (LMStudio)',
