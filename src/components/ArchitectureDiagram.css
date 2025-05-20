@@ -1,7 +1,11 @@
 .architecture-page {
-  max-width: 1200px;
+  max-width: 768px;
   margin: 0 auto;
   padding: 20px;
+}
+
+.architecture-page p:first-of-type {
+  text-align: center;
 }
 
 .architecture-page h1 {
@@ -25,21 +29,12 @@
   margin: 0 auto;
   overflow: hidden;
   position: relative;
-  cursor: grab;
-  touch-action: none;
-}
-
-.mermaid-diagram-wrapper:active {
-  cursor: grabbing;
 }
 
 .mermaid-diagram svg {
   display: block;
   margin: 0 auto;
-  transition: transform 0.05s ease-out;
-  transform-origin: center center;
   max-width: none;
-  will-change: transform;
 }
 
 /* Add zoom controls */
@@ -97,14 +92,29 @@
   margin-top: 0.5rem;
 }
 
-.loading-indicator {
-  text-align: center;
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
   padding: 2rem;
-  font-size: 1.2rem;
-  color: #666;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  margin: 2rem 0;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-message {

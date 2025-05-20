@@ -185,10 +185,10 @@ function generateMermaidDiagram(
   // Clean component names to be mermaid-friendly
   const cleanName = (name: string): string => name.replace(/[^\w]/g, '').replace(/\s+/g, '');
 
-  // Start with TD (top-down) layout
+  // Start with LR (left-right) layout for a more square shape
   let diagram = `
-  flowchart TB
-    %% Use TB (top to bottom) layout for better space usage
+  flowchart LR
+    %% Use LR (left to right) layout for more square-like arrangement
     
     %% Define node styles to be more compact
     linkStyle default interpolate basis
@@ -258,7 +258,7 @@ function generateMermaidDiagram(
   diagram += `\n    end\n`;
 
   // Add consolidated API endpoint node
-  diagram += `\n    API["API Endpoints\\n(${apiEndpoints.length} routes)"]`;
+  diagram += `\n    API["API Endpoints\\n (${apiEndpoints.length} routes)"]`;
   diagram += `\n    Server --> API`;
 
   // Add main connections between frontend and backend

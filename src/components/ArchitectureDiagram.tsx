@@ -107,7 +107,10 @@ const ArchitectureDiagram: React.FC = () => {
     return (
       <div className="architecture-page">
         <h1>Application Architecture</h1>
-        <div className="loading-indicator">Loading architecture data...</div>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading architecture data...</p>
+        </div>
       </div>
     );
   }
