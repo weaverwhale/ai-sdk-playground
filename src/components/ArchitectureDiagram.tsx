@@ -117,17 +117,19 @@ const ArchitectureDiagram: React.FC = () => {
 
   return (
     <div className="architecture-page">
-      <h1>Application Architecture</h1>
-      <p>This diagram shows the overall architecture of the AI SDK Playground application.</p>
-
-      {error && (
-        <div className="error-message">
-          {error}
-          <p>Showing static diagram as fallback.</p>
-        </div>
-      )}
+      <div className="architecture-header">
+        <h1>Application Architecture</h1>
+        <p>This diagram shows the overall architecture of the AI SDK Playground application.</p>
+      </div>
 
       <div className="architecture-diagram">
+        {error && (
+          <div className="error-message">
+            {error}
+            <p>Showing static diagram as fallback.</p>
+          </div>
+        )}
+
         <div className="mermaid-diagram">
           <MermaidDiagram chart={architectureData?.diagramCode || getStaticDiagramCode()} />
         </div>

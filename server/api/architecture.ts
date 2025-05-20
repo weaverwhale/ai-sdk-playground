@@ -56,12 +56,17 @@ async function scanDirectory(dir: string): Promise<string[]> {
  */
 async function analyzeFrontend(files: string[]): Promise<string[]> {
   const components: Set<string> = new Set();
+  const fileStructure: Map<string, string[]> = new Map();
   const componentRegex = /export\s+(?:default\s+)?(?:function|const|class)\s+(\w+)/g;
   const hookRegex = /export\s+(?:default\s+)?(?:function|const)\s+(use\w+)/g;
 
+  // First pass: group files by directory
   for (const file of files) {
     try {
       const content = await readFile(file, 'utf-8');
+      const relativePath = file.replace(/^src\//, ''); // Remove src/ prefix
+      const directory = path.dirname(relativePath);
+      const fileComponents: string[] = [];
 
       // Extract component names
       let match;
@@ -72,6 +77,7 @@ async function analyzeFrontend(files: string[]): Promise<string[]> {
           // Skip if it's a utility function, not a component
           if (!componentName.startsWith('use') && !componentName.startsWith('get')) {
             components.add(componentName);
+            fileComponents.push(componentName);
           }
         }
       }
@@ -81,15 +87,37 @@ async function analyzeFrontend(files: string[]): Promise<string[]> {
       for (match of hookMatches) {
         if (match[1]) {
           components.add(`${match[1]} (Hook)`);
+          fileComponents.push(`${match[1]} (Hook)`);
         }
+      }
+
+      // Add to file structure map if components were found
+      if (fileComponents.length > 0) {
+        if (!fileStructure.has(directory)) {
+          fileStructure.set(directory, []);
+        }
+        fileStructure.get(directory)?.push(...fileComponents);
       }
     } catch (error) {
       console.error(`Error reading file ${file}:`, error);
     }
   }
 
-  // Add framework info
-  return ['React Application (React 19, Vite)', ...Array.from(components).sort()];
+  // Convert file structure to strings
+  const result: string[] = ['React Application (React 19, Vite)'];
+
+  // Add file structure information
+  fileStructure.forEach((components, directory) => {
+    if (directory === '.') {
+      result.push(`DIR:Root:${components.length}`);
+      components.forEach((comp) => result.push(`Root:${comp}`));
+    } else {
+      result.push(`DIR:${directory}:${components.length}`);
+      components.forEach((comp) => result.push(`${directory}:${comp}`));
+    }
+  });
+
+  return result;
 }
 
 /**
@@ -100,7 +128,8 @@ async function analyzeBackend(files: string[]): Promise<{
   apiEndpoints: string[];
 }> {
   const components: Set<string> = new Set();
-  const endpoints: Set<string> = new Set();
+  const endpointsMap = new Map<string, Set<string>>(); // Map path to set of methods
+  const allEndpoints: string[] = []; // Collect all endpoints for post-processing
 
   // Improved regex to find Express route definitions with different declaration styles
   const routeRegex =
@@ -121,7 +150,19 @@ async function analyzeBackend(files: string[]): Promise<{
       const routeMatches = content.matchAll(routeRegex);
       for (match of routeMatches) {
         if (match[1]) {
-          endpoints.add(`${match[1]} [${match[0].split('.')[1].toUpperCase()}]`);
+          const method = match[0].split('.')[1].toUpperCase();
+          const path = match[1];
+
+          // Add to all endpoints for post-processing
+          allEndpoints.push(`${path} [${method}]`);
+
+          // Initialize set for this path if needed
+          if (!endpointsMap.has(path)) {
+            endpointsMap.set(path, new Set());
+          }
+
+          // Add method to this path's set
+          endpointsMap.get(path)?.add(method);
         }
       }
 
@@ -129,7 +170,17 @@ async function analyzeBackend(files: string[]): Promise<{
       const routerMatches = content.matchAll(routeRegex2);
       for (match of routerMatches) {
         if (match[1]) {
-          endpoints.add(`${match[1]} [${match[0].split('.')[1].toUpperCase()}]`);
+          const method = match[0].split('.')[1].toUpperCase();
+          const path = match[1];
+
+          // Add to all endpoints for post-processing
+          allEndpoints.push(`${path} [${method}]`);
+
+          if (!endpointsMap.has(path)) {
+            endpointsMap.set(path, new Set());
+          }
+
+          endpointsMap.get(path)?.add(method);
         }
       }
 
@@ -137,7 +188,17 @@ async function analyzeBackend(files: string[]): Promise<{
       const genericMatches = content.matchAll(routeRegex3);
       for (match of genericMatches) {
         if (match[1] && match[2]) {
-          endpoints.add(`${match[2]} [${match[1].toUpperCase()}]`);
+          const method = match[1].toUpperCase();
+          const path = match[2];
+
+          // Add to all endpoints for post-processing
+          allEndpoints.push(`${path} [${method}]`);
+
+          if (!endpointsMap.has(path)) {
+            endpointsMap.set(path, new Set());
+          }
+
+          endpointsMap.get(path)?.add(method);
         }
       }
 
@@ -168,9 +229,104 @@ async function analyzeBackend(files: string[]): Promise<{
     }
   }
 
+  // Post-process endpoints to deduplicate
+  const cleanedEndpoints: string[] = [];
+  const processedPaths = new Set<string>();
+
+  // First pass: create simple endpoints from the endpointsMap
+  endpointsMap.forEach((methods, path) => {
+    // Skip if not an API path
+    if (!path.startsWith('/') && !path.toLowerCase().includes('api')) {
+      return;
+    }
+
+    // Filter out HTTP headers
+    if (path.includes('-') && !path.startsWith('/') && path.split(' ')[0].includes('-')) {
+      return;
+    }
+
+    // Mark this path as processed
+    processedPaths.add(path);
+
+    // Add each method for this path
+    methods.forEach((method) => {
+      cleanedEndpoints.push(`${path} [${method}]`);
+    });
+  });
+
+  // Second pass: check for any complex endpoints that might have been missed
+  // like those with patterns '/API/TOOLS' that could be different from '/api/tools'
+  for (const endpoint of allEndpoints) {
+    // Extract path from the endpoint
+    const parts = endpoint.split(' [');
+    if (parts.length < 2) continue;
+
+    const path = parts[0];
+
+    // Skip if already processed
+    if (processedPaths.has(path)) {
+      continue;
+    }
+
+    // Skip if not an API path
+    if (!path.startsWith('/') && !path.toLowerCase().includes('api')) {
+      continue;
+    }
+
+    // Skip HTTP headers
+    if (path.includes('-') && !path.startsWith('/') && path.split(' ')[0].includes('-')) {
+      continue;
+    }
+
+    // Mark as processed and add
+    processedPaths.add(path);
+    cleanedEndpoints.push(endpoint);
+  }
+
+  // Final pass: deduplicate by normalizing paths and removing ones with embedded paths in method
+  const finalEndpoints: string[] = [];
+  const normalizedPaths = new Map<string, string>();
+
+  // First normalize paths (case insensitive comparison)
+  for (const endpoint of cleanedEndpoints) {
+    const parts = endpoint.split(' [');
+    if (parts.length < 2) continue;
+
+    const path = parts[0];
+    // We don't need to use method here, just extract path
+
+    // Normalize path (lowercase)
+    const normalizedPath = path.toLowerCase();
+
+    // Store original to normalized mapping
+    if (!normalizedPaths.has(normalizedPath)) {
+      normalizedPaths.set(normalizedPath, path);
+    }
+  }
+
+  // Then add endpoints with clean methods
+  for (const endpoint of cleanedEndpoints) {
+    const parts = endpoint.split(' [');
+    if (parts.length < 2) continue;
+
+    const path = parts[0];
+    const methodPart = parts[1];
+
+    // Skip if method contains a path like GET('/API/TOOLS'
+    if (methodPart.includes('/')) {
+      continue;
+    }
+
+    // Use normalized path version
+    const normalizedPath = path.toLowerCase();
+    const canonicalPath = normalizedPaths.get(normalizedPath) || path;
+
+    finalEndpoints.push(`${canonicalPath} [${methodPart}`);
+  }
+
   return {
     backendComponents: ['Express Server (Node.js)', ...Array.from(components).sort()],
-    apiEndpoints: Array.from(endpoints).sort(),
+    apiEndpoints: finalEndpoints.sort(),
   };
 }
 
@@ -182,9 +338,6 @@ function generateMermaidDiagram(
   backendComponents: string[],
   apiEndpoints: string[],
 ): string {
-  // Clean component names to be mermaid-friendly
-  const cleanName = (name: string): string => name.replace(/[^\w]/g, '').replace(/\s+/g, '');
-
   // Start with TB (top-bottom) layout for vertical orientation
   let diagram = `
   flowchart TB
@@ -193,40 +346,70 @@ function generateMermaidDiagram(
     %% Define node styles to be more compact
     linkStyle default interpolate basis
     
-    subgraph "Frontend"
-      React["React App"]
+    subgraph Frontend
+      React[React App]
   `;
 
-  // Add frontend components - arrange them horizontally for better vertical layout
-  const frontendCompsToShow = frontendComponents
-    .filter((c) => !c.includes('React Application') && !c.includes('(Hook)'))
-    .slice(0, 12); // Limit to top 12 components
+  // Parse the frontend components to extract directory structure
+  const directories: Map<string, string[]> = new Map();
 
-  // Create rows for frontend components (was columns in horizontal layout)
-  const ROW_SIZE = 4; // More components per row in vertical layout
-  for (let i = 0; i < frontendCompsToShow.length; i++) {
-    const component = frontendCompsToShow[i];
-    const cleanedName = cleanName(component);
-    const displayName = component.split(' (')[0].replace('Component', ''); // Shorter display names
-
-    // Add the component node with a compact label
-    diagram += `\n      ${cleanedName}["${displayName}"]`;
-
-    // Connect all to React
-    diagram += `\n      React --> ${cleanedName}`;
-
-    // Connect components in the same row horizontally
-    if (i % ROW_SIZE !== 0 && i > 0) {
-      const prevCompName = cleanName(frontendCompsToShow[i - 1]);
-      diagram += `\n      ${prevCompName} --- ${cleanedName}`;
+  frontendComponents.forEach((item) => {
+    if (item.startsWith('React Application')) {
+      // Skip the React Application header
+      return;
+    } else if (item.startsWith('DIR:')) {
+      // This is a directory header: DIR:directory:componentCount
+      const parts = item.split(':');
+      const dirName = parts[1];
+      directories.set(dirName, []);
+    } else if (item.includes(':')) {
+      // This is a component entry: directory:componentName
+      const parts = item.split(':');
+      const dirName = parts[0];
+      const component = parts[1];
+      if (directories.has(dirName)) {
+        directories.get(dirName)?.push(component);
+      }
     }
-  }
+  });
+
+  // Create directory nodes
+  let dirCount = 0;
+  directories.forEach((components, dirName) => {
+    const dirId = `Dir${dirCount}`;
+    // Simplify directory names to avoid special characters
+    const displayName = dirName === 'Root' ? 'RootDir' : dirName.replace(/[^\w]/g, '');
+    diagram += `\n      ${dirId}[${displayName}]`;
+    diagram += `\n      React --- ${dirId}`;
+
+    // Add up to 5 components per directory for clarity
+    const compsToShow = components.slice(0, 5);
+    compsToShow.forEach((comp, idx) => {
+      // Simplify component names to avoid special characters
+      const compName = comp.split(' (')[0];
+      const cleanedName = `Comp${dirCount}${idx}`;
+      const displayName = compName.replace(/[^\w]/g, '');
+
+      diagram += `\n      ${cleanedName}[${displayName}]`;
+      diagram += `\n      ${dirId} --- ${cleanedName}`;
+    });
+
+    // Show count if there are more components
+    if (components.length > compsToShow.length) {
+      const moreCount = components.length - compsToShow.length;
+      const moreId = `More${dirCount}`;
+      diagram += `\n      ${moreId}[${moreCount} more]`;
+      diagram += `\n      ${dirId} --- ${moreId}`;
+    }
+
+    dirCount++;
+  });
 
   diagram += `\n    end\n`;
 
   // Add backend components below frontend
-  diagram += `\n    subgraph "Backend"
-      Server["Express Server"]
+  diagram += `\n    subgraph Backend
+      Server[Express Server]
   `;
 
   // Limit backend components and arrange them more compactly
@@ -235,20 +418,22 @@ function generateMermaidDiagram(
     .slice(0, 12); // Limit to top 12 components
 
   // Create rows for backend components (similar to frontend)
+  const ROW_SIZE = 4;
   for (let i = 0; i < backendCompsToShow.length; i++) {
     const component = backendCompsToShow[i];
-    const cleanedName = cleanName(component);
-    const displayName = component.split(' (')[0]; // Keep original names for backend components
+    const cleanedName = `Backend${i}`;
+    // Simplify component names to avoid special characters
+    const displayName = component.split(' (')[0].replace(/[^\w]/g, '');
 
     // Add the component node
-    diagram += `\n      ${cleanedName}["${displayName}"]`;
+    diagram += `\n      ${cleanedName}[${displayName}]`;
 
     // Connect all to Server
-    diagram += `\n      Server --> ${cleanedName}`;
+    diagram += `\n      Server --- ${cleanedName}`;
 
     // Connect components in the same row horizontally
     if (i % ROW_SIZE !== 0 && i > 0) {
-      const prevCompName = cleanName(backendCompsToShow[i - 1]);
+      const prevCompName = `Backend${i - 1}`;
       diagram += `\n      ${prevCompName} --- ${cleanedName}`;
     }
   }
@@ -256,53 +441,80 @@ function generateMermaidDiagram(
   diagram += `\n    end\n`;
 
   // Add vertical flow between frontend and backend
-  diagram += `\n    React --> Server\n`;
+  diagram += `\n    React --- Server\n`;
 
   // Add API endpoints subgraph below backend
-  diagram += `\n    subgraph "API Endpoints"`;
+  diagram += `\n    subgraph API`;
 
-  // Limit number of endpoints shown to prevent diagram from getting too large
-  const endpointsToShow = apiEndpoints.slice(0, 10); // Show up to 10 endpoints
+  // Show a simplified version of API endpoints
+  // Limit number of endpoints to avoid diagram getting too large
+  const endpointsToShow = apiEndpoints.slice(0, 8);
 
-  // Add each endpoint as a node in a more horizontal arrangement for vertical diagram
+  // Add each endpoint as a simplified node
   for (let i = 0; i < endpointsToShow.length; i++) {
     const endpoint = apiEndpoints[i];
-    const endpointId = `Endpoint${i}`;
-    const displayEndpoint = endpoint.replace('[', '<br/>['); // Add line break before method
+    const endpointId = `API${i}`;
 
-    diagram += `\n      ${endpointId}["${displayEndpoint}"]`;
+    // Extract just the path part in a very simple way
+    let displayText = `Endpoint${i}`;
 
-    // Connect all endpoints to Server
-    diagram += `\n      Server --> ${endpointId}`;
+    try {
+      // First look for API path patterns like /api/something
+      const pathMatch = endpoint.match(/\/[a-zA-Z0-9/_-]+/);
+      if (pathMatch && pathMatch[0]) {
+        // Found a path pattern, replace slashes with a dash
+        const pathWithDashes = pathMatch[0].replace(/\//g, '∕');
+        displayText = pathWithDashes;
 
-    // Connect endpoints in rows horizontally
-    if (i % ROW_SIZE !== 0 && i > 0) {
-      diagram += `\n      Endpoint${i - 1} --- ${endpointId}`;
+        // Limit length
+        if (displayText.length > 15) {
+          displayText = displayText.substring(0, 12) + '...';
+        }
+      } else {
+        // Fallback: just take alphanumeric with dashes for slashes
+        const simplified = endpoint
+          .replace(/\[.*?\]/g, '') // Remove anything in square brackets
+          .trim();
+
+        // Try to preserve some structure by replacing slashes
+        const withDashes = simplified.replace(/\//g, '∕');
+
+        // Remove any other special characters
+        const cleaned = withDashes.replace(/[^a-zA-Z0-9∕-]/g, '');
+
+        if (cleaned.length > 0) {
+          displayText = cleaned.substring(0, 15); // Take only first 15 chars
+        }
+      }
+    } catch {
+      // Keep the default if there's any error
     }
+
+    // Create endpoint label that's guaranteed to be Mermaid safe
+    diagram += `\n      ${endpointId}[${displayText}]`;
+    diagram += `\n      Server --- ${endpointId}`;
   }
 
-  // Show message if there are more endpoints
+  // Show count if there are more endpoints
   if (apiEndpoints.length > endpointsToShow.length) {
     const moreCount = apiEndpoints.length - endpointsToShow.length;
-    diagram += `\n      MoreEndpoints["+ ${moreCount} more endpoints"]`;
-
-    // Connect to the last endpoint in a row
-    const lastRowSize = endpointsToShow.length % ROW_SIZE || ROW_SIZE;
-    const lastRowStart = endpointsToShow.length - lastRowSize;
-    diagram += `\n      Endpoint${lastRowStart} --- MoreEndpoints`;
+    diagram += `\n      MoreAPI[${moreCount} more]`;
+    diagram += `\n      Server --- MoreAPI`;
   }
 
   diagram += `\n    end\n`;
 
   // External models at the bottom
   diagram += `
-    ExternalSvcs["External AI Services"]
-    Server <--> ExternalSvcs
+    ExternalSvcs[ExternalAIServices]
+    Server --- ExternalSvcs
   `;
 
   // Add styling - more subtle colors for better readability
   diagram += `
     classDef frontend fill:#e6f7ff,stroke:#0099cc,stroke-width:1px
+    classDef directory fill:#ccf2ff,stroke:#0099cc,stroke-width:1px
+    classDef component fill:#e6f7ff,stroke:#0099cc,stroke-width:1px
     classDef backend fill:#fff5e6,stroke:#ff9933,stroke-width:1px
     classDef external fill:#f5e6ff,stroke:#9966cc,stroke-width:1px
     classDef api fill:#f0f9e8,stroke:#66cc33,stroke-width:1px
@@ -311,25 +523,33 @@ function generateMermaidDiagram(
     class React frontend
   `;
 
-  // Add component classes only if there are components
-  const frontendClassNames = frontendCompsToShow.map((c) => cleanName(c.split(' (')[0]));
-  if (frontendClassNames.length > 0) {
-    diagram += `\n    class ${frontendClassNames.join(',')} frontend`;
+  // Add directory classes
+  for (let i = 0; i < dirCount; i++) {
+    diagram += `\n    class Dir${i} directory`;
   }
+
+  // Add component styling for frontend components
+  directories.forEach((comps, dir) => {
+    const dirIndex = Array.from(directories.keys()).indexOf(dir);
+    const compsToShow = comps.slice(0, 5);
+    for (let i = 0; i < compsToShow.length; i++) {
+      diagram += `\n    class Comp${dirIndex}${i} component`;
+    }
+  });
 
   diagram += `\n    class Server backend`;
 
-  const backendClassNames = backendCompsToShow.map((c) => cleanName(c.split(' (')[0]));
-  if (backendClassNames.length > 0) {
-    diagram += `\n    class ${backendClassNames.join(',')} backend`;
+  // Add backend component styling
+  for (let i = 0; i < backendCompsToShow.length; i++) {
+    diagram += `\n    class Backend${i} backend`;
   }
 
   // Add endpoint styling
   for (let i = 0; i < endpointsToShow.length; i++) {
-    diagram += `\n    class Endpoint${i} endpoint`;
+    diagram += `\n    class API${i} endpoint`;
   }
   if (apiEndpoints.length > endpointsToShow.length) {
-    diagram += `\n    class MoreEndpoints endpoint`;
+    diagram += `\n    class MoreAPI endpoint`;
   }
 
   diagram += `\n    class ExternalSvcs external`;

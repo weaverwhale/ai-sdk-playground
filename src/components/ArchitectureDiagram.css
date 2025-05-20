@@ -1,10 +1,10 @@
 .architecture-page {
-  max-width: 768px;
   margin: 0 auto;
   padding: 20px;
+  width: 100%;
 }
 
-.architecture-page > p:first-of-type {
+.architecture-header {
   text-align: center;
 }
 
@@ -15,7 +15,7 @@
 }
 
 .architecture-diagram {
-  margin: 2rem 0;
+  margin: 2rem 0 0;
   overflow: hidden;
 }
 
@@ -60,9 +60,10 @@
 
 .architecture-explanation {
   background-color: #f8f9fa;
+  max-width: 768px;
+  margin: 0 auto;
   padding: 1.5rem;
   border-radius: 8px;
-  margin-top: 2rem;
 }
 
 .architecture-explanation h2 {
