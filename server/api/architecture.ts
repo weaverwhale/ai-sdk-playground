@@ -106,15 +106,15 @@ async function analyzeFrontend(files: string[]): Promise<string[]> {
   // Convert file structure to strings
   const result: string[] = ['React Application (React 19, Vite)'];
 
-  // Add file structure information
+  // Add components directly without directory entries
   fileStructure.forEach((components, directory) => {
-    if (directory === '.') {
-      result.push(`DIR:Root:${components.length}`);
-      components.forEach((comp) => result.push(`Root:${comp}`));
-    } else {
-      result.push(`DIR:${directory}:${components.length}`);
-      components.forEach((comp) => result.push(`${directory}:${comp}`));
-    }
+    components.forEach((comp) => {
+      if (directory === '.') {
+        result.push(`Root:${comp}`);
+      } else {
+        result.push(`${directory}:${comp}`);
+      }
+    });
   });
 
   return result;
@@ -138,6 +138,10 @@ async function analyzeBackend(files: string[]): Promise<{
     /router\.(?:get|post|put|delete|patch|all|options|head)\s*\(\s*['"`]([^'"`]+)['"`]/g;
   const routeRegex3 = /\.(get|post|put|delete|patch|all|options|head)\s*\(\s*['"`]([^'"`]+)['"`]/g;
   const exportRegex = /export\s+(?:default\s+)?(?:function|const|class)\s+(\w+)/g;
+
+  // Track if we've already found Express components
+  let hasExpressServer = false;
+  let hasExpressRouter = false;
 
   for (const file of files) {
     try {
@@ -214,12 +218,17 @@ async function analyzeBackend(files: string[]): Promise<{
         }
       }
 
-      // Check for common backend patterns
-      if (content.includes('import express')) {
-        components.add('Express Server');
+      // Check for common backend patterns - avoid duplicates
+      if (content.includes('import express') && !hasExpressServer) {
+        components.add('Express Server (Node.js)');
+        hasExpressServer = true;
       }
-      if (content.includes('new Router()') || content.includes('express.Router()')) {
+      if (
+        (content.includes('new Router()') || content.includes('express.Router()')) &&
+        !hasExpressRouter
+      ) {
         components.add('Express Router');
+        hasExpressRouter = true;
       }
       if (content.includes('mongoose')) {
         components.add('Mongoose (MongoDB)');
@@ -324,8 +333,21 @@ async function analyzeBackend(files: string[]): Promise<{
     finalEndpoints.push(`${canonicalPath} [${methodPart}`);
   }
 
+  // Prepare the final list of backend components
+  const backendComponentsList = Array.from(components).sort();
+
+  // Get unique backend components, ensuring we only have one Express Server entry
+  const uniqueBackendComponents = ['Express Server (Node.js)'];
+
+  // Add the rest of components, excluding any additional Express Server entries
+  for (const component of backendComponentsList) {
+    if (component !== 'Express Server' && component !== 'Express Server (Node.js)') {
+      uniqueBackendComponents.push(component);
+    }
+  }
+
   return {
-    backendComponents: ['Express Server (Node.js)', ...Array.from(components).sort()],
+    backendComponents: uniqueBackendComponents,
     apiEndpoints: finalEndpoints.sort(),
   };
 }
@@ -357,19 +379,18 @@ function generateMermaidDiagram(
     if (item.startsWith('React Application')) {
       // Skip the React Application header
       return;
-    } else if (item.startsWith('DIR:')) {
-      // This is a directory header: DIR:directory:componentCount
-      const parts = item.split(':');
-      const dirName = parts[1];
-      directories.set(dirName, []);
     } else if (item.includes(':')) {
       // This is a component entry: directory:componentName
       const parts = item.split(':');
       const dirName = parts[0];
       const component = parts[1];
-      if (directories.has(dirName)) {
-        directories.get(dirName)?.push(component);
+
+      // Initialize directory if it doesn't exist
+      if (!directories.has(dirName)) {
+        directories.set(dirName, []);
       }
+
+      directories.get(dirName)?.push(component);
     }
   });
 
