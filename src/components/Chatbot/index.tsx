@@ -417,10 +417,13 @@ const Chatbot: React.FC = () => {
 
   if (serverStatus === 'checking') {
     return (
-      <div className={`chatbot-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Connecting to server...</p>
+      <div className="chatbot-wrapper">
+        <h1 className="chatbot-wrapper-header">Chat</h1>
+        <div className={`chatbot-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Connecting to server...</p>
+          </div>
         </div>
       </div>
     );
@@ -428,122 +431,132 @@ const Chatbot: React.FC = () => {
 
   if (serverStatus === 'offline') {
     return (
-      <div className={`chatbot-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
-        <div className="error-container">
-          <h3>Server Connection Error</h3>
-          <p>{serverInfo}</p>
-          <button onClick={retryConnection} className="retry-button">
-            Retry Connection
-          </button>
+      <div className="chatbot-wrapper">
+        <h1 className="chatbot-wrapper-header">Chat</h1>
+        <div className={`chatbot-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
+          <div className="error-container">
+            <h3>Server Connection Error</h3>
+            <p>{serverInfo}</p>
+            <button onClick={retryConnection} className="retry-button">
+              Retry Connection
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`chatbot-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
-      {serverInfo && <div className="server-status">{serverInfo}</div>}
+    <div className="chatbot-wrapper">
+      <h1 className="chatbot-wrapper-header">Chat</h1>
+      <div className={`chatbot-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
+        {serverInfo && <div className="server-status">{serverInfo}</div>}
 
-      <div className="chat-controls">
-        <div
-          className={`model-selector ${
-            status === 'submitted' || status === 'streaming' || availableModels.length === 0
-              ? 'disabled'
-              : ''
-          }`}
-        >
-          <select
-            id="model-select"
-            value={selectedModel}
-            onChange={handleModelChange}
-            disabled={
-              status === 'submitted' || status === 'streaming' || availableModels.length === 0
-            }
-            aria-label="Select AI model"
-          >
-            {availableModels.length === 0 && <option value="">No models available</option>}
-            {availableModels.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="chatbot-options">
+        <div className="chat-controls">
           <div
-            className={`search-mode-toggle ${
-              status === 'submitted' || status === 'streaming' ? 'disabled' : ''
+            className={`model-selector ${
+              status === 'submitted' || status === 'streaming' || availableModels.length === 0
+                ? 'disabled'
+                : ''
             }`}
           >
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                id="deep-search-toggle"
-                checked={isDeepSearchMode}
-                onChange={toggleDeepSearchMode}
-                disabled={status === 'submitted' || status === 'streaming'}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-            <label htmlFor="deep-search-toggle" className="toggle-label">
-              Deep Search
-            </label>
+            <select
+              id="model-select"
+              value={selectedModel}
+              onChange={handleModelChange}
+              disabled={
+                status === 'submitted' || status === 'streaming' || availableModels.length === 0
+              }
+              aria-label="Select AI model"
+            >
+              {availableModels.length === 0 && <option value="">No models available</option>}
+              {availableModels.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <button
-            className="clear-button"
-            onClick={clearConversation}
-            disabled={status === 'submitted' || status === 'streaming' || chatMessages.length === 0}
-          >
-            Clear Chat
-          </button>
+          <div className="chatbot-options">
+            <div
+              className={`search-mode-toggle ${
+                status === 'submitted' || status === 'streaming' ? 'disabled' : ''
+              }`}
+            >
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  id="deep-search-toggle"
+                  checked={isDeepSearchMode}
+                  onChange={toggleDeepSearchMode}
+                  disabled={status === 'submitted' || status === 'streaming'}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+              <label htmlFor="deep-search-toggle" className="toggle-label">
+                Deep Search
+              </label>
+            </div>
+
+            <button
+              className="clear-button"
+              onClick={clearConversation}
+              disabled={
+                status === 'submitted' || status === 'streaming' || chatMessages.length === 0
+              }
+            >
+              Clear Chat
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className={`messages-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}>
-        <ChatMessages
-          chatMessages={chatMessages}
-          status={status}
-          error={error}
-          errorDetails={chatErrorDetails}
-          expandedTools={expandedTools}
-          toolOptions={toolOptions}
-          toggleToolExpansion={toggleToolExpansion}
-          onFinalResponse={onFinalResponse}
-          messagesEndRef={messagesEndRef}
-          chatContainerRef={chatContainerRef}
-          handleRetry={handleRetry}
-          searchPlan={searchPlan}
-          isDeepSearchMode={isDeepSearchMode}
-          isCreatingPlan={isCreatingPlan}
-          isExecutingPlan={isExecutingPlan}
-        />
-
-        {/* Display search plan if in deep search mode and plan exists */}
-        {isDeepSearchMode && searchPlan && (
-          <div className="message assistant search-plan-container">
-            <SearchPlanDisplay plan={searchPlan} toolOptions={toolOptions} />
-          </div>
-        )}
-      </div>
-
-      <form className="chat-input" onSubmit={handleSubmit}>
-        <input
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={isDeepSearchMode ? 'Ask a complex question...' : 'Ask me anything...'}
-          className="input-field"
-        />
-        <button
-          className="send-button"
-          type="submit"
-          disabled={status === 'submitted' || status === 'streaming'}
+        <div
+          className={`messages-container ${isDeepSearchMode && searchPlan ? 'deep-search' : ''}`}
         >
-          Send
-        </button>
-      </form>
+          <ChatMessages
+            chatMessages={chatMessages}
+            status={status}
+            error={error}
+            errorDetails={chatErrorDetails}
+            expandedTools={expandedTools}
+            toolOptions={toolOptions}
+            toggleToolExpansion={toggleToolExpansion}
+            onFinalResponse={onFinalResponse}
+            messagesEndRef={messagesEndRef}
+            chatContainerRef={chatContainerRef}
+            handleRetry={handleRetry}
+            searchPlan={searchPlan}
+            isDeepSearchMode={isDeepSearchMode}
+            isCreatingPlan={isCreatingPlan}
+            isExecutingPlan={isExecutingPlan}
+          />
+
+          {/* Display search plan if in deep search mode and plan exists */}
+          {isDeepSearchMode && searchPlan && (
+            <div className="message assistant search-plan-container">
+              <SearchPlanDisplay plan={searchPlan} toolOptions={toolOptions} />
+            </div>
+          )}
+        </div>
+
+        <form className="chat-input" onSubmit={handleSubmit}>
+          <input
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={isDeepSearchMode ? 'Ask a complex question...' : 'Ask me anything...'}
+            className="input-field"
+          />
+          <button
+            className="send-button"
+            type="submit"
+            disabled={status === 'submitted' || status === 'streaming'}
+          >
+            Send
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
