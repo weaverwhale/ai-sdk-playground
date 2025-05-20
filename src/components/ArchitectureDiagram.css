@@ -4,7 +4,7 @@
   padding: 20px;
 }
 
-.architecture-page p:first-of-type {
+.architecture-page > p:first-of-type {
   text-align: center;
 }
 
