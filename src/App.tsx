@@ -1,32 +1,39 @@
 import './App.css';
-import { useState } from 'react';
 import Chatbot from './components/Chatbot';
 import ArchitectureDiagram from './components/ArchitectureDiagram';
+import { Route, Routes, NavLink, useLocation } from 'react-router';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'chat' | 'architecture'>('chat');
+  const location = useLocation();
+  const currentPage = location.pathname;
 
   return (
     <div className="app-container">
       <header>
         <h1>AI SDK</h1>
         <nav className="main-nav">
-          <button
-            className={currentPage === 'chat' ? 'active' : ''}
-            onClick={() => setCurrentPage('chat')}
+          <NavLink
+            to="/"
+            className={({ isActive }) => (isActive ? 'active nav-button' : 'nav-button')}
           >
             Chat
-          </button>
-          <button
-            className={currentPage === 'architecture' ? 'active' : ''}
-            onClick={() => setCurrentPage('architecture')}
+          </NavLink>
+          <NavLink
+            to="/architecture"
+            className={({ isActive }) => (isActive ? 'active nav-button' : 'nav-button')}
           >
             Architecture
-          </button>
+          </NavLink>
         </nav>
       </header>
 
-      <main>{currentPage === 'chat' ? <Chatbot /> : <ArchitectureDiagram />}</main>
+      <main>
+        <Routes>
+          <Route path="/" element={<Chatbot />} />
+          <Route path="/architecture" element={<ArchitectureDiagram />} />
+        </Routes>
+      </main>
+
       {currentPage === 'architecture' ? (
         <footer>
           <p>Built with React, AI SDK, and Vite</p>
