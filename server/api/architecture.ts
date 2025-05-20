@@ -258,7 +258,7 @@ function generateMermaidDiagram(
   diagram += `\n    end\n`;
 
   // Add consolidated API endpoint node
-  diagram += `\n    API["API Endpoints\\n (${apiEndpoints.length} routes)"]`;
+  diagram += `\n    API["API Endpoints<br/>(${apiEndpoints.length} routes)"]`;
   diagram += `\n    Server --> API`;
 
   // Add main connections between frontend and backend
