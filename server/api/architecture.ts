@@ -185,10 +185,10 @@ function generateMermaidDiagram(
   // Clean component names to be mermaid-friendly
   const cleanName = (name: string): string => name.replace(/[^\w]/g, '').replace(/\s+/g, '');
 
-  // Start with LR (left-right) layout for a more square shape
+  // Start with TB (top-bottom) layout for vertical orientation
   let diagram = `
-  flowchart LR
-    %% Use LR (left to right) layout for more square-like arrangement
+  flowchart TB
+    %% Use TB (top to bottom) layout for vertical orientation
     
     %% Define node styles to be more compact
     linkStyle default interpolate basis
@@ -197,13 +197,13 @@ function generateMermaidDiagram(
       React["React App"]
   `;
 
-  // Add frontend components - arrange them in multiple columns
+  // Add frontend components - arrange them horizontally for better vertical layout
   const frontendCompsToShow = frontendComponents
     .filter((c) => !c.includes('React Application') && !c.includes('(Hook)'))
     .slice(0, 12); // Limit to top 12 components
 
-  // Create columns for frontend components
-  const COLUMN_SIZE = 3;
+  // Create rows for frontend components (was columns in horizontal layout)
+  const ROW_SIZE = 4; // More components per row in vertical layout
   for (let i = 0; i < frontendCompsToShow.length; i++) {
     const component = frontendCompsToShow[i];
     const cleanedName = cleanName(component);
@@ -212,21 +212,19 @@ function generateMermaidDiagram(
     // Add the component node with a compact label
     diagram += `\n      ${cleanedName}["${displayName}"]`;
 
-    // Create column-based layout by only connecting some nodes directly to React
-    if (i < COLUMN_SIZE) {
-      // First column connects directly to React
-      diagram += `\n      React --> ${cleanedName}`;
-    } else {
-      // Other columns connect to the component above them
-      const prevColumnIndex = i % COLUMN_SIZE;
-      const prevCompName = cleanName(frontendCompsToShow[prevColumnIndex]);
-      diagram += `\n      ${prevCompName} --> ${cleanedName}`;
+    // Connect all to React
+    diagram += `\n      React --> ${cleanedName}`;
+
+    // Connect components in the same row horizontally
+    if (i % ROW_SIZE !== 0 && i > 0) {
+      const prevCompName = cleanName(frontendCompsToShow[i - 1]);
+      diagram += `\n      ${prevCompName} --- ${cleanedName}`;
     }
   }
 
   diagram += `\n    end\n`;
 
-  // Add backend components in a more compact way
+  // Add backend components below frontend
   diagram += `\n    subgraph "Backend"
       Server["Express Server"]
   `;
@@ -236,7 +234,7 @@ function generateMermaidDiagram(
     .filter((c) => !c.includes('Express Server'))
     .slice(0, 12); // Limit to top 12 components
 
-  // Create columns for backend components too
+  // Create rows for backend components (similar to frontend)
   for (let i = 0; i < backendCompsToShow.length; i++) {
     const component = backendCompsToShow[i];
     const cleanedName = cleanName(component);
@@ -245,26 +243,58 @@ function generateMermaidDiagram(
     // Add the component node
     diagram += `\n      ${cleanedName}["${displayName}"]`;
 
-    // Create column-based layout similar to frontend
-    if (i < COLUMN_SIZE) {
-      diagram += `\n      Server --> ${cleanedName}`;
-    } else {
-      const prevColumnIndex = i % COLUMN_SIZE;
-      const prevCompName = cleanName(backendCompsToShow[prevColumnIndex]);
-      diagram += `\n      ${prevCompName} --> ${cleanedName}`;
+    // Connect all to Server
+    diagram += `\n      Server --> ${cleanedName}`;
+
+    // Connect components in the same row horizontally
+    if (i % ROW_SIZE !== 0 && i > 0) {
+      const prevCompName = cleanName(backendCompsToShow[i - 1]);
+      diagram += `\n      ${prevCompName} --- ${cleanedName}`;
     }
   }
 
   diagram += `\n    end\n`;
 
-  // Add consolidated API endpoint node
-  diagram += `\n    API["API Endpoints<br/>(${apiEndpoints.length} routes)"]`;
-  diagram += `\n    Server --> API`;
+  // Add vertical flow between frontend and backend
+  diagram += `\n    React --> Server\n`;
 
-  // Add main connections between frontend and backend
-  diagram += `\n    React <-->|HTTP Requests| API\n`;
+  // Add API endpoints subgraph below backend
+  diagram += `\n    subgraph "API Endpoints"`;
 
-  // External models - simplified
+  // Limit number of endpoints shown to prevent diagram from getting too large
+  const endpointsToShow = apiEndpoints.slice(0, 10); // Show up to 10 endpoints
+
+  // Add each endpoint as a node in a more horizontal arrangement for vertical diagram
+  for (let i = 0; i < endpointsToShow.length; i++) {
+    const endpoint = apiEndpoints[i];
+    const endpointId = `Endpoint${i}`;
+    const displayEndpoint = endpoint.replace('[', '<br/>['); // Add line break before method
+
+    diagram += `\n      ${endpointId}["${displayEndpoint}"]`;
+
+    // Connect all endpoints to Server
+    diagram += `\n      Server --> ${endpointId}`;
+
+    // Connect endpoints in rows horizontally
+    if (i % ROW_SIZE !== 0 && i > 0) {
+      diagram += `\n      Endpoint${i - 1} --- ${endpointId}`;
+    }
+  }
+
+  // Show message if there are more endpoints
+  if (apiEndpoints.length > endpointsToShow.length) {
+    const moreCount = apiEndpoints.length - endpointsToShow.length;
+    diagram += `\n      MoreEndpoints["+ ${moreCount} more endpoints"]`;
+
+    // Connect to the last endpoint in a row
+    const lastRowSize = endpointsToShow.length % ROW_SIZE || ROW_SIZE;
+    const lastRowStart = endpointsToShow.length - lastRowSize;
+    diagram += `\n      Endpoint${lastRowStart} --- MoreEndpoints`;
+  }
+
+  diagram += `\n    end\n`;
+
+  // External models at the bottom
   diagram += `
     ExternalSvcs["External AI Services"]
     Server <--> ExternalSvcs
@@ -276,6 +306,7 @@ function generateMermaidDiagram(
     classDef backend fill:#fff5e6,stroke:#ff9933,stroke-width:1px
     classDef external fill:#f5e6ff,stroke:#9966cc,stroke-width:1px
     classDef api fill:#f0f9e8,stroke:#66cc33,stroke-width:1px
+    classDef endpoint fill:#e6ffec,stroke:#33cc66,stroke-width:1px
     
     class React frontend
   `;
@@ -286,11 +317,19 @@ function generateMermaidDiagram(
     diagram += `\n    class ${frontendClassNames.join(',')} frontend`;
   }
 
-  diagram += `\n    class Server,API backend`;
+  diagram += `\n    class Server backend`;
 
   const backendClassNames = backendCompsToShow.map((c) => cleanName(c.split(' (')[0]));
   if (backendClassNames.length > 0) {
     diagram += `\n    class ${backendClassNames.join(',')} backend`;
+  }
+
+  // Add endpoint styling
+  for (let i = 0; i < endpointsToShow.length; i++) {
+    diagram += `\n    class Endpoint${i} endpoint`;
+  }
+  if (apiEndpoints.length > endpointsToShow.length) {
+    diagram += `\n    class MoreEndpoints endpoint`;
   }
 
   diagram += `\n    class ExternalSvcs external`;

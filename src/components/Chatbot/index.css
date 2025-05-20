@@ -577,7 +577,8 @@ input:checked + .toggle-slider:before {
 }
 
 .message-content p {
-  margin: 0.5rem;
+  /* margin: 0.5rem; */
+  margin: 0;
 }
 
 .message-content ul,
