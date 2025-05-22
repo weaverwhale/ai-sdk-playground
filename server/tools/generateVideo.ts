@@ -62,13 +62,9 @@ export const generateVideo = {
           const filename = `${crypto.randomUUID()}.mp4`;
           const filepath = path.join(VIDEOS_DIR, filename);
 
-          // Create a write stream and pipe the response to it
-          const fileStream = fs.createWriteStream(filepath);
-          await new Promise((resolve, reject) => {
-            response.body?.pipe(fileStream);
-            fileStream.on('finish', resolve);
-            fileStream.on('error', reject);
-          });
+          // Download and save the video
+          const buffer = await response.arrayBuffer();
+          fs.writeFileSync(filepath, Buffer.from(buffer));
 
           return `/uploads/${filename}`;
         }) ?? [],
