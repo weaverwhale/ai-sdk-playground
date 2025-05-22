@@ -5,6 +5,7 @@ import rehypeRaw from 'rehype-raw';
 import MermaidDiagram from '../MermaidDiagram';
 import SearchPlanDisplay from '../SearchPlanDisplay';
 import GenerativeUIDisplay from '../GenerativeUIDisplay';
+import { ToolOutput } from '../ToolOutput';
 import type { Components } from 'react-markdown';
 import { useChatbotMessages } from '../../hooks/useChatbotMessages';
 import { useServerMonitoring } from '../../hooks/useServerMonitoring';
@@ -205,10 +206,7 @@ const ToolCallsDisplay = memo(
                       <GenerativeUIDisplay jsxString={toolCall.output} />
                     </div>
                   ) : toolCall.output ? (
-                    <div className="tool-output">
-                      <div className="tool-section-label">Output:</div>
-                      <pre>{toolCall.output}</pre>
-                    </div>
+                    <ToolOutput output={toolCall.output} toolName={toolCall.name} />
                   ) : null}
                 </>
               )}

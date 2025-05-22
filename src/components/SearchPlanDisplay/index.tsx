@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { SearchPlan, PlanStep, ToolCall, ToolInfo } from '../../types/chatTypes';
+import { ToolOutput } from '../ToolOutput';
 
 import './index.css';
 
@@ -104,26 +105,7 @@ const SearchPlanStepCard = memo(
                     {expandedToolCalls[idx] && (
                       <div className="tool-call-result">
                         {toolCall.output ? (
-                          <>
-                            {toolCall.output.length > 500 ? (
-                              <div className="tool-result-preview">
-                                <ReactMarkdown
-                                  remarkPlugins={[remarkGfm]}
-                                  rehypePlugins={[rehypeRaw]}
-                                >
-                                  {`${toolCall.output.substring(0, 10000)}...`}
-                                </ReactMarkdown>
-                                <div className="tool-result-info">(Result truncated)</div>
-                              </div>
-                            ) : (
-                              <ReactMarkdown
-                                remarkPlugins={[remarkGfm]}
-                                rehypePlugins={[rehypeRaw]}
-                              >
-                                {toolCall.output}
-                              </ReactMarkdown>
-                            )}
-                          </>
+                          <ToolOutput output={toolCall.output} toolName={toolCall.name} />
                         ) : (
                           <p className="no-result">No result data available from this tool.</p>
                         )}

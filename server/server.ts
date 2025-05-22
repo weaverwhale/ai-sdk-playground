@@ -3,6 +3,7 @@ import 'dotenv/config';
 
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { handleChatRequest } from '../server/api/chat';
 import { handleToolsRequest } from '../server/api/tools';
 import {
@@ -27,6 +28,9 @@ app.use(
 );
 
 app.use(express.json());
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use((req, res, next) => {
   console.log(`[SERVER] ${new Date().toISOString()} ${req.method} ${req.url}`);

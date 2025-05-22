@@ -1,0 +1,148 @@
+.tool-output {
+  margin-top: 8px;
+}
+
+.tool-section-label {
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.tool-media-container {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.tool-media-section-label {
+  font-weight: 500;
+  color: #2d3748;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+.tool-generated-image {
+  max-width: 100%;
+  max-height: 400px;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.tool-generated-image:hover {
+  transform: scale(1.02);
+  cursor: pointer;
+}
+
+.tool-generated-video {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tool-image-item,
+.tool-video-item {
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.tool-image-item:last-child,
+.tool-video-item:last-child {
+  margin-bottom: 0;
+}
+
+.tool-media-info {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.tool-media-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: #3182ce;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  transition: background-color 0.2s ease;
+}
+
+.tool-media-link:hover {
+  background-color: #2c5aa0;
+  color: white;
+  text-decoration: none;
+}
+
+.tool-text-output {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.tool-text-output pre {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .tool-section-label {
+    color: #cbd5e0;
+  }
+
+  .tool-media-section-label {
+    color: #e2e8f0;
+  }
+
+  .tool-media-container {
+    background-color: #2d3748;
+    border-color: #4a5568;
+  }
+
+  .tool-text-output {
+    border-top-color: #4a5568;
+  }
+
+  .tool-text-output pre {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tool-generated-image {
+    max-height: 300px;
+  }
+
+  .tool-generated-video {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tool-media-container {
+    padding: 8px;
+  }
+
+  .tool-generated-image {
+    max-height: 250px;
+  }
+
+  .tool-generated-video {
+    max-height: 250px;
+  }
+}

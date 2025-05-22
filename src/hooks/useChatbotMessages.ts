@@ -283,14 +283,36 @@ export function useChatbotMessages({
         // Case 1: Processing tool response
         toolCallResponseRef.current = lastMsg.content;
 
-        // Update the tool call with output
+        // Extract tool results from message parts if available
+        let toolOutput = 'Tool response received.';
+
+        // Check if the message has parts with tool invocations that have results
+        if (lastMsg.parts && Array.isArray(lastMsg.parts)) {
+          for (const part of lastMsg.parts) {
+            if (
+              part.type === 'tool-invocation' &&
+              part.toolInvocation?.state === 'result' &&
+              part.toolInvocation?.toolName === lastToolCallRef.current?.name
+            ) {
+              const toolResult = part.toolInvocation.result;
+              if (toolResult) {
+                // If the result is an object, stringify it; otherwise use as-is
+                toolOutput =
+                  typeof toolResult === 'object' ? JSON.stringify(toolResult) : String(toolResult);
+                break;
+              }
+            }
+          }
+        }
+
+        // Update the tool call with actual output
         if (lastToolCallRef.current.id) {
           dispatch({
             type: 'UPDATE_TOOL_CALL',
             payload: {
               toolCallId: lastToolCallRef.current.id,
               status: 'completed',
-              output: 'Tool response received.',
+              output: toolOutput,
             },
           });
 

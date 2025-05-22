@@ -37,17 +37,10 @@ const checkApiKey = (key: string | undefined, provider: string): boolean => {
 
 export const modelProviders: ModelProvider[] = [
   {
-    id: 'gpt-4o-mini',
-    name: 'GPT-4o Mini (OpenAI)',
+    id: 'gpt-4.1-mini',
+    name: 'GPT-4.1 Mini (OpenAI)',
     available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
-    model: openai('gpt-4o-mini'),
-    defaultSystemPrompt,
-  },
-  {
-    id: 'gpt-4o',
-    name: 'GPT-4o (OpenAI)',
-    available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
-    model: openai('gpt-4o'),
+    model: openai('gpt-4.1-mini'),
     defaultSystemPrompt,
   },
   {
@@ -105,6 +98,13 @@ export const modelProviders: ModelProvider[] = [
     name: 'Llama 3.3 70B (Cerebras)',
     available: checkApiKey(process.env.CEREBRAS_API_KEY, 'CEREBRAS'),
     model: cerebras('llama-3.3-70b'),
+    defaultSystemPrompt,
+  },
+  {
+    id: 'qwen-3-32b',
+    name: 'Qwen 3 32B (Cerebras)',
+    available: checkApiKey(process.env.CEREBRAS_API_KEY, 'CEREBRAS'),
+    model: cerebras('qwen-3-32b'),
     defaultSystemPrompt,
   },
   {

@@ -8,6 +8,8 @@ import { memory } from './memory';
 import { generativeUi } from './generativeUI';
 import { operator } from './operator';
 import { webSearch } from './webSearch';
+import { generateImage } from './generateImage';
+import { generateVideo } from './generateVideo';
 
 export const tools = {
   moby,
@@ -20,6 +22,8 @@ export const tools = {
   generativeUi,
   webSearch,
   operator,
+  generateImage,
+  generateVideo,
 };
 
 export const geminiTools = {
@@ -33,4 +37,6 @@ export const geminiTools = {
   generativeUi,
   webSearch,
   operator,
+  generateImage,
+  generateVideo,
 };

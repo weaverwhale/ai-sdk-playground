@@ -220,7 +220,11 @@ export async function handleChatRequest(body: ChatRequest) {
     // Always add the system message to the beginning of the messages array
     // This part should never fail
     try {
-      const systemPrompt = modelProvider.defaultSystemPrompt + (memoryContext || '');
+      const systemPrompt =
+        modelProvider.defaultSystemPrompt +
+        (memoryContext || '') +
+        (modelId.includes('qwen') ? '\n\n/no_think' : '');
+
       messagesWithSystem = [{ role: 'system', content: systemPrompt } as Message, ...body.messages];
     } catch (systemError) {
       console.error('[API] Error adding system prompt:', systemError);

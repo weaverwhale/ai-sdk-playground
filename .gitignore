@@ -24,5 +24,6 @@ dist-ssr
 
 .env
 
-# ignore memories
+# ignore stuff
 /memory
+/uploads
