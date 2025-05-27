@@ -29,6 +29,7 @@ export const generateVideo = {
 
     try {
       let operation = await ai.models.generateVideos({
+        // model: 'veo-3.0-generate-preview',
         model: 'veo-2.0-generate-001',
         prompt: prompt,
         config: {
