@@ -29,8 +29,8 @@ export const generateImage = {
     try {
       const { image } = await experimental_generateImage({
         prompt: prompt,
-        // model: openai.image('gpt-image-1'),
-        model: openai.image('dall-e-3'),
+        // model: openai.image('dall-e-3'),
+        model: openai.image('gpt-image-1'),
       });
 
       // Generate a unique filename

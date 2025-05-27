@@ -33,11 +33,6 @@
   transition: transform 0.2s ease;
 }
 
-.tool-generated-image:hover {
-  transform: scale(1.02);
-  cursor: pointer;
-}
-
 .tool-generated-video {
   max-width: 100%;
   max-height: 400px;
