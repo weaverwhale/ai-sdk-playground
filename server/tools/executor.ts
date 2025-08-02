@@ -47,6 +47,15 @@ const ALLOWED_COMMANDS = [
   'wget',
   'ping',
   'nslookup',
+  'uname',
+  'uptime',
+  'hostname',
+  'id',
+  'groups',
+  'w',
+  'who',
+  'last',
+  'finger',
   'node',
   'npm',
   'yarn',
@@ -171,8 +180,11 @@ const executor = {
       // Generate the command using AI
       const { text: generatedCommand } = await generateText({
         model: openai.responses('gpt-4o-mini'),
-        prompt: executorSystemPrompt,
         messages: [
+          {
+            role: 'system',
+            content: executorSystemPrompt,
+          },
           {
             role: 'user',
             content: request,
