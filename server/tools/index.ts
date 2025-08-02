@@ -10,6 +10,7 @@ import { operator } from './operator';
 import { webSearch } from './webSearch';
 import { generateImage } from './generateImage';
 import { generateVideo } from './generateVideo';
+import { executor } from './executor';
 
 export const tools = {
   moby,
@@ -24,6 +25,7 @@ export const tools = {
   operator,
   generateImage,
   generateVideo,
+  executor,
 };
 
 export const geminiTools = {
@@ -39,4 +41,5 @@ export const geminiTools = {
   operator,
   generateImage,
   generateVideo,
+  executor,
 };
