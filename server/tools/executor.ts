@@ -122,22 +122,33 @@ const validateCommand = (command: string): { isValid: boolean; reason?: string }
     }
   }
 
-  // Extract the base command (first word)
-  const baseCommand = trimmedCommand.split(/\s+/)[0].toLowerCase();
+  // Split command on operators to handle chaining (&&, ||, ;, |)
+  const commandParts = trimmedCommand
+    .split(/[;&|]+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
 
-  // Check if the base command is in the allowed list
-  const isAllowed = ALLOWED_COMMANDS.some(
-    (allowed) =>
-      baseCommand === allowed ||
-      baseCommand.endsWith(`/${allowed}`) ||
-      baseCommand.endsWith(`\\${allowed}`),
-  );
+  for (const part of commandParts) {
+    // Skip empty parts or just whitespace
+    if (!part || !part.trim()) continue;
 
-  if (!isAllowed) {
-    return {
-      isValid: false,
-      reason: `Command '${baseCommand}' is not in the allowed commands list`,
-    };
+    // Extract the base command (first word) from each part
+    const baseCommand = part.split(/\s+/)[0].toLowerCase();
+
+    // Check if the base command is in the allowed list
+    const isAllowed = ALLOWED_COMMANDS.some(
+      (allowed) =>
+        baseCommand === allowed ||
+        baseCommand.endsWith(`/${allowed}`) ||
+        baseCommand.endsWith(`\\${allowed}`),
+    );
+
+    if (!isAllowed) {
+      return {
+        isValid: false,
+        reason: `Command '${baseCommand}' is not in the allowed commands list`,
+      };
+    }
   }
 
   return { isValid: true };
@@ -179,7 +190,7 @@ const executor = {
 
       // Generate the command using AI
       const { text: generatedCommand } = await generateText({
-        model: openai.responses('gpt-4o-mini'),
+        model: openai('gpt-4o-mini'),
         messages: [
           {
             role: 'system',
