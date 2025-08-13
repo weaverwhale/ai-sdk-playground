@@ -158,7 +158,7 @@ const ToolCallsDisplay = memo(
         {toolCalls.map((toolCall, idx) => {
           const isExpanded = expandedTools[`${messageIndex}-${idx}`] === true;
           const toolInfo = toolOptions[toolCall.name];
-          const displayName = toolCall.displayName || toolInfo?.name || toolCall.name || 'AI Tool';
+          const displayName = toolInfo?.name || toolCall.displayName || toolCall.name || 'AI Tool';
           const description =
             toolCall.description || toolInfo?.description || 'Using tool to retrieve information';
           const status = toolCall.status || 'completed';

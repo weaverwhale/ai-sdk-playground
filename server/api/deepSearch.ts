@@ -339,18 +339,18 @@ export async function executeSearchPlan(
 
           // Create tool calls in the same format as normal chat mode
           step.toolCalls = toolResults.map((toolResult: Record<string, unknown>, index: number) => {
-            const toolName = String(toolResult.toolName || 'unknown');
-            const toolInfo = toolOptions[toolName] || {
-              name: toolName,
+            const toolId = String(toolResult.toolName || 'unknown');
+            const toolInfo = toolOptions[toolId] || {
+              name: toolId,
               description: 'Tool execution',
-              id: toolName,
+              id: toolId,
             };
 
             const correspondingToolCall = toolCalls[index] || {};
 
             return {
               id: `${step.id}-tool-${index}`,
-              name: toolName,
+              name: toolInfo.name,
               input: (correspondingToolCall.input as Record<string, unknown>) || {},
               output:
                 typeof toolResult.output === 'string'

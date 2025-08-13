@@ -160,7 +160,7 @@ export function useChatbotMessages({
 
       // Create a tool call object
       const newToolCall: ToolCall = {
-        name: toolCall?.toolName || '',
+        name: toolInfo.name || toolCall?.toolName || '',
         input: toolCall?.input || {},
         status: 'running',
         description: toolInfo.description,
