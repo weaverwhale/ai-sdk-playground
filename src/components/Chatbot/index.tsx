@@ -196,7 +196,7 @@ const ToolCallsDisplay = memo(
                 <>
                   <div className="tool-args">
                     <div className="tool-section-label">Arguments:</div>
-                    <pre>{JSON.stringify(toolCall.args, null, 2)}</pre>
+                    <pre>{JSON.stringify(toolCall.input, null, 2)}</pre>
                   </div>
                   {toolCall.output &&
                   toolCall.name === 'generativeUi' &&

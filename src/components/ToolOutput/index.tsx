@@ -286,7 +286,7 @@ export const ToolOutput: React.FC<ToolOutputProps> = ({ output, toolName }) => {
                   {output}
                 </ReactMarkdown>
               ) : (
-                <pre>{output}</pre>
+                <p>{output}</p>
               )}
             </div>
           </div>
@@ -304,7 +304,7 @@ export const ToolOutput: React.FC<ToolOutputProps> = ({ output, toolName }) => {
           {output}
         </ReactMarkdown>
       ) : (
-        <pre>{output}</pre>
+        <p>{output}</p>
       )}
     </div>
   );

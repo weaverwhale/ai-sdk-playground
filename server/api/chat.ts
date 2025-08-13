@@ -1,13 +1,13 @@
-import { generateText, streamText, type Message } from 'ai';
+import { generateText, streamText, type UIMessage, convertToModelMessages, stepCountIs } from 'ai';
 import { getModelProviderById } from '../modelProviders';
 import { tools, geminiTools } from '../tools';
 import { ChatMessage, storeChatToMemory, searchChatMemory } from '../chatMemory';
 
-const DEFAULT_MODEL_ID = 'openai';
+const DEFAULT_MODEL_ID = 'gpt-4.1-mini';
 
 // Define an interface for ChatRequest to include userId
 interface ChatRequest {
-  messages: Message[];
+  messages: UIMessage[];
   modelId?: string;
   stream?: boolean;
   userId?: string; // Add userId to track conversation history
@@ -44,11 +44,18 @@ export async function handleChatRequest(body: ChatRequest) {
           // Get the latest user message to use as query
           const lastUserMessage = [...body.messages]
             .reverse()
-            .find((m: Message) => m.role === 'user');
+            .find((m: UIMessage) => m.role === 'user');
 
-          if (lastUserMessage && lastUserMessage.content) {
+          const lastUserContent = lastUserMessage
+            ? lastUserMessage.parts
+                ?.filter((part): part is { type: 'text'; text: string } => part.type === 'text')
+                ?.map((part) => part.text)
+                ?.join('') || ''
+            : '';
+
+          if (lastUserMessage && lastUserContent) {
             console.log(
-              `[API] Searching memory for user ${userId} with query: ${lastUserMessage.content.substring(
+              `[API] Searching memory for user ${userId} with query: ${lastUserContent.substring(
                 0,
                 50,
               )}...`,
@@ -60,11 +67,7 @@ export async function handleChatRequest(body: ChatRequest) {
               try {
                 // Call the memory search function with a string return type
                 // This should help handle potential parsing errors in the function
-                const memorySearchResult = await searchChatMemory(
-                  userId,
-                  lastUserMessage.content,
-                  5,
-                );
+                const memorySearchResult = await searchChatMemory(userId, lastUserContent, 5);
 
                 // Defensive parsing for memory search results
                 if (typeof memorySearchResult === 'string') {
@@ -107,8 +110,16 @@ export async function handleChatRequest(body: ChatRequest) {
                     i--, count++
                   ) {
                     const msg = body.messages[i];
-                    if (msg && msg.content) {
-                      recentExchanges.add(msg.content.trim());
+                    const msgContent =
+                      msg.parts
+                        ?.filter(
+                          (part): part is { type: 'text'; text: string } => part.type === 'text',
+                        )
+                        ?.map((part) => part.text)
+                        ?.join('') || '';
+
+                    if (msg && msgContent) {
+                      recentExchanges.add(msgContent.trim());
                     }
                   }
 
@@ -225,7 +236,14 @@ export async function handleChatRequest(body: ChatRequest) {
         (memoryContext || '') +
         (modelId.includes('qwen') ? '\n\n/no_think' : '');
 
-      messagesWithSystem = [{ role: 'system', content: systemPrompt } as Message, ...body.messages];
+      messagesWithSystem = [
+        {
+          role: 'system',
+          id: `system-${Date.now()}`,
+          parts: [{ type: 'text', text: systemPrompt }],
+        } as UIMessage,
+        ...body.messages,
+      ];
     } catch (systemError) {
       console.error('[API] Error adding system prompt:', systemError);
       // Fallback to just the messages without system prompt in case of error
@@ -242,11 +260,12 @@ export async function handleChatRequest(body: ChatRequest) {
         result = streamText({
           model,
           tools: computedTools,
-          messages: messagesWithSystem,
-          maxTokens: 5000,
-          experimental_continueSteps: true,
-          maxSteps: 10,
+          messages: convertToModelMessages(messagesWithSystem),
+          maxOutputTokens: 5000,
+          stopWhen: stepCountIs(10),
         });
+
+        console.log('[API] StreamText result created successfully');
       } catch (streamError) {
         console.error(`[API] Stream error with model ${modelId}:`, streamError);
         throw streamError;
@@ -261,7 +280,11 @@ export async function handleChatRequest(body: ChatRequest) {
               msg.role === 'user' || msg.role === 'assistant' || msg.role === 'system'
                 ? msg.role
                 : 'system',
-            content: msg.content || '',
+            content:
+              msg.parts
+                ?.filter((part): part is { type: 'text'; text: string } => part.type === 'text')
+                ?.map((part) => part.text)
+                ?.join('') || '',
             ...(msg.id ? { id: msg.id } : {}),
           })) as ChatMessage[];
 
@@ -281,13 +304,14 @@ export async function handleChatRequest(body: ChatRequest) {
         }
       }
 
-      return result.toDataStreamResponse();
+      return result.toUIMessageStreamResponse();
     } else {
       try {
         result = await generateText({
           model,
           tools: computedTools,
-          messages: messagesWithSystem,
+          messages: convertToModelMessages(messagesWithSystem),
+          stopWhen: stepCountIs(10),
         });
       } catch (generateError) {
         console.error(`[API] Generate text error with model ${modelId}:`, generateError);
@@ -303,7 +327,11 @@ export async function handleChatRequest(body: ChatRequest) {
               msg.role === 'user' || msg.role === 'assistant' || msg.role === 'system'
                 ? msg.role
                 : 'system',
-            content: msg.content || '',
+            content:
+              msg.parts
+                ?.filter((part): part is { type: 'text'; text: string } => part.type === 'text')
+                ?.map((part) => part.text)
+                ?.join('') || '',
             ...(msg.id ? { id: msg.id } : {}),
           })) as ChatMessage[];
 

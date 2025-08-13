@@ -10,7 +10,7 @@ const urbanDictionary = {
   id: 'urbanDictionary',
   name: 'Urban Dictionary',
   description: 'Useful for looking up slang definitions and internet culture terms',
-  parameters: z.object({
+  inputSchema: z.object({
     term: z.string().describe('The term to look up'),
   }),
   execute: async ({ term }: UrbanDictionaryParams) => {

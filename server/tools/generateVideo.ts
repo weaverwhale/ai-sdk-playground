@@ -21,7 +21,7 @@ export const generateVideo = {
   id: 'generateVideo',
   name: 'Generate Video',
   description: 'Useful for generating videos based on a prompt',
-  parameters: z.object({
+  inputSchema: z.object({
     prompt: z.string().describe('Prompt for the image generation'),
   }),
   execute: async ({ prompt }: GenerateVideoParams) => {

@@ -9,7 +9,7 @@ const wikipedia = {
   id: 'wikipedia',
   name: 'Wikipedia',
   description: 'Useful for getting quick summaries from Wikipedia',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe('The topic to search on Wikipedia'),
   }),
   execute: async ({ query }: WikipediaParams) => {

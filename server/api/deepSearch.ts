@@ -1,8 +1,9 @@
-import { generateObject, type LanguageModelV1 } from 'ai';
+import { generateObject, type LanguageModel } from 'ai';
 import { z } from 'zod';
 import { getModelProviderById, ModelProvider } from '../modelProviders';
 import { handleChatRequest } from './chat';
 import { orchestratorSystemPrompt, summarizerSystemPrompt } from '../prompt';
+import { tools } from '../tools';
 
 // Global store for search plans
 // This needs to be exported so it can be used by the server
@@ -31,7 +32,7 @@ export interface SearchPlan {
 }
 
 // Define the type for the AI model
-type AIModel = LanguageModelV1;
+type AIModel = LanguageModel;
 
 // Function to safely update the search plan in the global map
 export function updateSearchPlan(planId: string, updatedPlan: SearchPlan): void {
@@ -86,7 +87,7 @@ export async function handleDeepSearchRequest(body: {
 
     // Use the orchestrator to create a search plan
     console.log(
-      `[DEEP SEARCH] Creating search plan for query: "${query}" using orchestrator model: ${orchestratorProvider.model.modelId}`,
+      `[DEEP SEARCH] Creating search plan for query: "${query}" using orchestrator model: ${orchestratorProvider.id}`,
     );
     const plan = await createSearchPlan(query, orchestratorProvider.model);
 
@@ -279,11 +280,14 @@ export async function executeSearchPlan(
             {
               id: `${workingPlan.createdAt}-${step.id}`,
               role: 'user',
-              content: `
-              Execute this search step: "${step.description}"
+              parts: [
+                {
+                  type: 'text',
+                  text: `Execute this search step: "${step.description}"
               This is part of answering the overall query: "${workingPlan.query}"
-              Focus on providing a thorough but concise explanation based on the specific step assigned.
-              `,
+              Focus on providing a thorough but concise explanation based on the specific step assigned.`,
+                },
+              ],
             },
           ],
           modelId: workerModelProvider.id,
@@ -293,23 +297,70 @@ export async function executeSearchPlan(
         // set the output to the result text
         step.output = result.text;
 
-        // Add tool call information to step data if available
-        // NOTE toolResults = toolCalls, we get it as toolResults here
-        if (
-          result &&
-          'toolResults' in result &&
-          Array.isArray(result.toolResults) &&
-          result.toolResults.length > 0
-        ) {
-          console.log(
-            `[DEEP SEARCH] Tool results for step ${step.id} (${result.toolResults.length})`,
+        // Process tool calls exactly like normal chat mode does
+        // Check if we have tool results from the generateText call
+        // The result might have steps with tool calls
+        let toolCalls: Record<string, unknown>[] = [];
+        let toolResults: Record<string, unknown>[] = [];
+
+        // Check different possible locations for tool data
+        if (result && 'toolResults' in result && Array.isArray(result.toolResults)) {
+          toolResults = result.toolResults;
+        }
+        if (result && 'toolCalls' in result && Array.isArray(result.toolCalls)) {
+          toolCalls = result.toolCalls;
+        }
+
+        // Check if tool data is in steps
+        if (result && 'steps' in result && Array.isArray(result.steps)) {
+          result.steps.forEach((step: Record<string, unknown>) => {
+            if (step.toolCalls && Array.isArray(step.toolCalls)) {
+              toolCalls.push(...step.toolCalls);
+            }
+            if (step.toolResults && Array.isArray(step.toolResults)) {
+              toolResults.push(...step.toolResults);
+            }
+          });
+        }
+
+        if (toolResults.length > 0) {
+          // Get available tool options (same as normal chat)
+          const toolOptions = Object.values(tools).reduce(
+            (acc: Record<string, { id: string; name: string; description: string }>, tool) => {
+              acc[tool.id] = {
+                id: tool.id,
+                name: tool.name,
+                description: tool.description,
+              };
+              return acc;
+            },
+            {} as Record<string, { id: string; name: string; description: string }>,
           );
 
-          // Also create the new toolResults format
-          step.toolCalls = result.toolResults.map((toolResult) => ({
-            name: toolResult.toolName || 'unknown',
-            output: toolResult.result || '',
-          }));
+          // Create tool calls in the same format as normal chat mode
+          step.toolCalls = toolResults.map((toolResult: Record<string, unknown>, index: number) => {
+            const toolName = String(toolResult.toolName || 'unknown');
+            const toolInfo = toolOptions[toolName] || {
+              name: toolName,
+              description: 'Tool execution',
+              id: toolName,
+            };
+
+            const correspondingToolCall = toolCalls[index] || {};
+
+            return {
+              id: `${step.id}-tool-${index}`,
+              name: toolName,
+              input: (correspondingToolCall.input as Record<string, unknown>) || {},
+              output:
+                typeof toolResult.output === 'string'
+                  ? toolResult.output
+                  : JSON.stringify(toolResult),
+              status: 'completed' as const,
+              description: toolInfo.description,
+              displayName: toolInfo.name,
+            };
+          });
         }
 
         // Update step with the result and change status to completed

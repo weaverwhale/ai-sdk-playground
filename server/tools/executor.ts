@@ -171,7 +171,7 @@ const executor = {
   name: 'Executor',
   description:
     'Execute safe system commands based on requests. Only allows whitelisted commands for security.',
-  parameters: z.object({
+  inputSchema: z.object({
     request: z.string().describe('The request to create a safe system command for'),
     workingDirectory: z
       .string()

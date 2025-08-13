@@ -13,14 +13,14 @@ const chartGenerator = {
   id: 'chartGenerator',
   name: 'Chart Generator',
   description: 'Useful for generating Mermaid charts from data',
-  parameters: z.object({
+  inputSchema: z.object({
     type: z
       .enum(['line', 'bar', 'pie', 'gantt', 'sankey', 'git'])
       .describe('Type of chart to generate'),
     data: z
       .array(z.array(z.union([z.string(), z.number()])))
       .describe(
-        'Array of data points. For line/bar: [[label, value], ...]. For pie: [[label, value], ...]. For sankey: [[source, target, value], ...]. For git: [[action, params...], ...]'
+        'Array of data points. For line/bar: [[label, value], ...]. For pie: [[label, value], ...]. For sankey: [[source, target, value], ...]. For git: [[action, params...], ...]',
       ),
     title: z.string().optional().describe('Chart title'),
     xLabel: z.string().optional().describe('X-axis label'),
@@ -59,7 +59,9 @@ const chartGenerator = {
       return result;
     } catch (error) {
       console.error('Error generating chart:', error);
-      return `Error: Could not generate chart: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      return `Error: Could not generate chart: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`;
     }
   },
 };
@@ -68,7 +70,7 @@ function generateLineChart(
   data: Array<Array<string | number>>,
   title?: string,
   xLabel?: string,
-  yLabel?: string
+  yLabel?: string,
 ): string {
   // Extract labels and values from data
   const labels = data.map(([x]) => x?.toString() || '');
@@ -93,7 +95,9 @@ function generateLineChart(
   const maxY = Math.max(...validValues);
 
   // Add y-axis with validated range
-  chart += `y-axis "${yLabel || ''}" ${isFinite(minY) ? minY : 0} --> ${isFinite(maxY) ? maxY : 1}\n`;
+  chart += `y-axis "${yLabel || ''}" ${isFinite(minY) ? minY : 0} --> ${
+    isFinite(maxY) ? maxY : 1
+  }\n`;
 
   // Add line data
   chart += `line [${values.join(',')}]\n`;
@@ -105,7 +109,7 @@ function generateBarChart(
   data: Array<Array<string | number>>,
   title?: string,
   xLabel?: string,
-  yLabel?: string
+  yLabel?: string,
 ): string {
   // Extract labels and values from data, ensuring numeric conversion
   const labels = data.map(([x]) => x?.toString() || '');
@@ -137,10 +141,7 @@ function generateBarChart(
   return chart;
 }
 
-function generatePieChart(
-  data: Array<Array<string | number>>,
-  title?: string
-): string {
+function generatePieChart(data: Array<Array<string | number>>, title?: string): string {
   let chart = 'pie\n';
   if (title) chart += `    title "${title}"\n`;
 
@@ -151,10 +152,7 @@ function generatePieChart(
   return chart;
 }
 
-function generateGanttChart(
-  data: Array<Array<string | number>>,
-  title?: string
-): string {
+function generateGanttChart(data: Array<Array<string | number>>, title?: string): string {
   let chart = 'gantt\n';
   if (title) chart += `    title "${title}"\n`;
   chart += '    dateFormat YYYY-MM-DD\n';
@@ -211,4 +209,4 @@ function generateGitGraph(data: Array<Array<string | number>>): string {
   return chart;
 }
 
-export { chartGenerator }; 
+export { chartGenerator };

@@ -1,7 +1,7 @@
 // Types for chat messages and related components
 export interface ToolCall {
   name: string;
-  args: Record<string, unknown>;
+  input: unknown;
   output?: string;
   description?: string;
   status?: 'running' | 'completed' | 'error';
@@ -22,14 +22,6 @@ export interface ToolInfo {
   id: string;
   description: string;
   name: string;
-}
-
-// Match the shape expected by useChat's onToolCall callback
-export interface ToolCallHandlerArg {
-  toolCall: {
-    toolName: string;
-    args: unknown;
-  };
 }
 
 export interface Model {

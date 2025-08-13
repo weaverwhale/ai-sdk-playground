@@ -299,7 +299,7 @@ const memory = {
   id: 'memory',
   name: 'Memory',
   description: 'Store and search user conversation history and memories using vector embeddings',
-  parameters: z.object({
+  inputSchema: z.object({
     operation: z
       .enum(['store', 'search', 'update'])
       .describe(

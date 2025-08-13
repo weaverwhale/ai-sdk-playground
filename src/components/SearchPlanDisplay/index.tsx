@@ -104,6 +104,10 @@ const SearchPlanStepCard = memo(
                     </div>
                     {expandedToolCalls[idx] && (
                       <div className="tool-call-result">
+                        <div className="tool-args">
+                          <div className="tool-section-label">Arguments:</div>
+                          <pre>{JSON.stringify(toolCall.input, null, 2)}</pre>
+                        </div>
                         {toolCall.output ? (
                           <ToolOutput output={toolCall.output} toolName={toolCall.name} />
                         ) : (
@@ -156,6 +160,12 @@ const SearchPlanStepCard = memo(
       prevProps.step.error !== nextProps.step.error
     ) {
       console.log(`Step ${nextProps.step.id} output or error changed, re-rendering`);
+      return false; // re-render
+    }
+
+    // Re-render if toolCalls changed
+    if (JSON.stringify(prevProps.step.toolCalls) !== JSON.stringify(nextProps.step.toolCalls)) {
+      console.log(`Step ${nextProps.step.id} toolCalls changed, re-rendering`);
       return false; // re-render
     }
 
@@ -319,6 +329,17 @@ const SearchPlanDisplay = memo(
       ) {
         console.log(`[SEARCH PLAN] Step ${i} output or error changed`);
         return false; // Re-render
+      }
+    }
+
+    // Force re-render if toolCalls have changed
+    for (let i = 0; i < prevProps.plan.steps.length; i++) {
+      if (
+        JSON.stringify(prevProps.plan.steps[i].toolCalls) !==
+        JSON.stringify(nextProps.plan.steps[i].toolCalls)
+      ) {
+        console.log(`[SEARCH PLAN] Step ${i} toolCalls changed`);
+        return false;
       }
     }
 

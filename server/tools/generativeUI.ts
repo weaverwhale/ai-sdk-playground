@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { generateText, CoreMessage } from 'ai';
+import { generateText, ModelMessage } from 'ai';
 import { getModelProviderById } from '../modelProviders';
 import { generativeUiToolPrompt } from '../prompt';
 
@@ -12,7 +12,7 @@ const messageSchema = z.object({
 
 type GenerativeUiParams = {
   description: string;
-  conversationHistory: CoreMessage[];
+  conversationHistory: ModelMessage[];
 };
 
 const generativeUi = {
@@ -20,7 +20,7 @@ const generativeUi = {
   name: 'Generative UI',
   description:
     'Generates React JSX markup based on a description and conversation history, suitable for rendering dynamic UI elements. Uses Tailwind CSS for styling.', // Updated description
-  parameters: z.object({
+  inputSchema: z.object({
     description: z
       .string()
       .describe(
@@ -44,7 +44,7 @@ const generativeUi = {
         );
       }
       const model = modelProvider.model;
-      const messages: CoreMessage[] = [
+      const messages: ModelMessage[] = [
         { role: 'system', content: generativeUiToolPrompt },
         ...conversationHistory,
         { role: 'user', content: description },

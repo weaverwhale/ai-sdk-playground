@@ -1,4 +1,4 @@
-import type { LanguageModelV1 } from 'ai';
+import type { LanguageModel } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { groq } from '@ai-sdk/groq';
@@ -23,7 +23,7 @@ export interface ModelProvider {
   id: string;
   name: string;
   available: boolean;
-  model: LanguageModelV1;
+  model: LanguageModel;
   defaultSystemPrompt: string;
 }
 
@@ -51,10 +51,17 @@ export const modelProviders: ModelProvider[] = [
     defaultSystemPrompt,
   },
   {
-    id: 'claude-3-5-sonnet',
-    name: 'Claude 3.5 Sonnet (Anthropic)',
-    available: checkApiKey(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC'),
-    model: anthropic('claude-3-5-sonnet-latest'),
+    id: 'gpt-5-mini',
+    name: 'GPT-5 Mini (OpenAI)',
+    available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
+    model: openai('gpt-5-mini'),
+    defaultSystemPrompt,
+  },
+  {
+    id: 'gpt-5',
+    name: 'GPT-5 (OpenAI)',
+    available: checkApiKey(process.env.OPENAI_API_KEY, 'OPENAI'),
+    model: openai('gpt-5'),
     defaultSystemPrompt,
   },
   {
@@ -62,6 +69,13 @@ export const modelProviders: ModelProvider[] = [
     name: 'Claude 3.7 Sonnet (Anthropic)',
     available: checkApiKey(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC'),
     model: anthropic('claude-3-7-sonnet-latest'),
+    defaultSystemPrompt,
+  },
+  {
+    id: 'claude-4-sonnet',
+    name: 'Claude 4 Sonnet (Anthropic)',
+    available: checkApiKey(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC'),
+    model: anthropic('claude-sonnet-4-20250514'),
     defaultSystemPrompt,
   },
   {
@@ -111,23 +125,19 @@ export const modelProviders: ModelProvider[] = [
     id: 'gemini-flash',
     name: 'Gemini 2.5 Flash (Google)',
     available: checkApiKey(process.env.GOOGLE_GENERATIVE_AI_API_KEY, 'GEMINI'),
-    model: google('gemini-2.5-flash-001', {
-      useSearchGrounding: true,
-    }),
+    model: google('gemini-2.5-flash-001'),
     defaultSystemPrompt,
   },
   {
     id: 'gemini-2.5-pro-exp-05-06',
     name: 'Gemini 2.5 Pro (Google)',
     available: checkApiKey(process.env.GOOGLE_GENERATIVE_AI_API_KEY, 'GEMINI'),
-    model: google('gemini-2.5-pro-exp-05-06', {
-      useSearchGrounding: true,
-    }),
+    model: google('gemini-2.5-pro-exp-05-06'),
     defaultSystemPrompt,
   },
   {
     id: 'gemini-vertex',
-    name: 'Gemini 2.0 Flash Vertex (Google)',
+    name: 'Gemini 2.5 Flash (Vertex)',
     available: true,
     model: vertex('gemini-2.5-flash-001'),
     defaultSystemPrompt,

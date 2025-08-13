@@ -328,21 +328,18 @@ async function fetchUserPRs(
     `;
 
     while (hasNextPage) {
-      const variables = { searchQuery, after: afterCursor };
-      const data = await makeGitHubGraphQLRequest<GitHubGraphQLSearchResponse>(
-        token,
-        gqlQuery,
-        variables,
-      );
+      const variables: GitHubGraphQLVariables = { searchQuery, after: afterCursor };
+      const data: GitHubGraphQLResponse<GitHubGraphQLSearchResponse> =
+        await makeGitHubGraphQLRequest<GitHubGraphQLSearchResponse>(token, gqlQuery, variables);
       const currentNodes = (data.data.search.nodes || []).filter(
-        (node): node is GitHubGraphQLNode => node !== null,
+        (node: unknown): node is GitHubGraphQLNode => node !== null,
       );
-      const pageInfo = data.data.search.pageInfo;
+      const pageInfo: GitHubGraphQLPageInfo = data.data.search.pageInfo;
 
       hasNextPage = pageInfo.hasNextPage;
       afterCursor = pageInfo.endCursor;
 
-      currentNodes.forEach((node) => {
+      currentNodes.forEach((node: GitHubGraphQLNode) => {
         const { title, number, createdAt, repository } = node;
         if (title && number && createdAt && repository?.name) {
           repoPRs.push({
@@ -563,16 +560,13 @@ async function fetchUserRepositories(
     let personalAfter: string | null = null;
 
     while (personalHasNext) {
-      const data = await makeGitHubGraphQLRequest<GitHubGraphQLUserResponse>(
-        token,
-        personalReposQuery,
-        {
+      const data: GitHubGraphQLResponse<GitHubGraphQLUserResponse> =
+        await makeGitHubGraphQLRequest<GitHubGraphQLUserResponse>(token, personalReposQuery, {
           login: username,
           after: personalAfter,
-        },
-      );
+        });
       const repoNodes = data.data.user.repositories.nodes || [];
-      repoNodes.forEach((node) => {
+      repoNodes.forEach((node: { name: string; nameWithOwner: string }) => {
         if (node.nameWithOwner) {
           repoSet.add(node.nameWithOwner);
         }
@@ -724,7 +718,7 @@ const weeklyReport = {
   name: 'Weekly Report',
   description:
     'Generates a weekly report of GitHub activity for a specific user including PRs and commits',
-  parameters: z.object({
+  inputSchema: z.object({
     username: z.string().describe('GitHub username to generate report for'),
     offset: z
       .number()

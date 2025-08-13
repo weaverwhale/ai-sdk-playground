@@ -22,7 +22,7 @@ export const generateImage = {
   id: 'generateImage',
   name: 'Generate Image',
   description: 'Useful for generating images based on a prompt',
-  parameters: z.object({
+  inputSchema: z.object({
     prompt: z.string().describe('Prompt for the image generation'),
   }),
   execute: async ({ prompt }: GenerateImageParams) => {

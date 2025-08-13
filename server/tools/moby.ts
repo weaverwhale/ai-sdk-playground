@@ -18,7 +18,7 @@ const moby = {
   id: 'moby',
   name: 'Moby',
   description: "Useful for getting e-commerce analytics and insights from Triple Whale's AI, Moby.",
-  parameters: z.object({
+  inputSchema: z.object({
     question: z
       .string()
       .describe('Question to ask Triple Whale Moby')

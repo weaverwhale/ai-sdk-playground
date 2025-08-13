@@ -581,7 +581,7 @@ function generateMermaidDiagram(
 /**
  * Handle the architecture API request
  */
-export async function handleArchitectureRequest(req: Request, res: Response) {
+export async function handleArchitectureRequest(_req: Request, res: Response) {
   try {
     console.log('[SERVER] Generating architecture data...');
 

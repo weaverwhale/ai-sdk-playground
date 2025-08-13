@@ -12,7 +12,7 @@ const operator = {
   id: 'operator',
   name: 'Operator',
   description: 'Visit a website and perform an action.',
-  parameters: z.object({
+  inputSchema: z.object({
     website: z
       .string()
       .describe(
