@@ -35,7 +35,7 @@ const ArchitectureDiagram: React.FC = () => {
         setArchitectureData({
           diagramCode: getStaticDiagramCode(),
           frontendComponents: [
-            'React Application (React 19, Vite)',
+            'React Application (React 19, Vite 7)',
             'UI Components (Chat, Search Plan, Diagrams)',
             'Custom Hooks',
           ],

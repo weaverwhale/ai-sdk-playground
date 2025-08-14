@@ -24,7 +24,7 @@ A multi-tool chatbot built with React and the AI SDK.
 
 ### Prerequisites
 
-- Node.js 22 (provided via nvm)
+- Node.js 24 (provided via nvm)
 - npm or yarn
 
 ### Installation
