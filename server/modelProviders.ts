@@ -163,6 +163,13 @@ export const modelProviders: ModelProvider[] = [
     model: lmstudio('mistral-nemo-instruct-2407'),
     defaultSystemPrompt,
   },
+  {
+    id: 'gpt-oss-20b',
+    name: 'GPT-OSS 20B (LMStudio)',
+    available: true,
+    model: lmstudio('gpt-oss-20b'),
+    defaultSystemPrompt,
+  },
 ];
 
 export function getModelProviderById(id: string): ModelProvider | undefined {

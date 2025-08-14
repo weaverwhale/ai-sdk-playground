@@ -6,6 +6,7 @@
 
 .architecture-header {
   text-align: center;
+  position: relative;
 }
 
 .architecture-page h1 {
@@ -77,10 +78,30 @@
   font-size: 1.2rem;
   margin: 1.5rem 0 0.5rem;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.architecture-explanation ul {
-  margin-left: 1.5rem;
+.architecture-explanation h3::before {
+  content: '📁';
+  font-size: 1.1em;
+}
+
+.architecture-explanation h3:nth-of-type(1)::before {
+  content: '🎨'; /* Frontend */
+}
+
+.architecture-explanation h3:nth-of-type(2)::before {
+  content: '⚙️'; /* Backend */
+}
+
+.architecture-explanation h3:nth-of-type(3)::before {
+  content: '🌐'; /* API Endpoints */
+}
+
+.architecture-explanation h3:nth-of-type(4)::before {
+  content: '🔄'; /* Data Flow */
 }
 
 .architecture-explanation li {
@@ -91,6 +112,315 @@
 .architecture-explanation p {
   line-height: 1.6;
   margin-top: 0.5rem;
+}
+
+/* Enhanced component hierarchy styling */
+.component-hierarchy,
+.api-hierarchy {
+  margin-top: 1rem;
+}
+
+.category-section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.category-section:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.category-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.component-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.component-item {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.component-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+  transition: width 0.2s ease;
+}
+
+.component-item:hover {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #3b82f6;
+  transform: translateX(4px);
+}
+
+.component-item:hover::before {
+  width: 6px;
+}
+
+.component-item strong {
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Clickable file items */
+.component-item.clickable {
+  cursor: pointer;
+  position: relative;
+}
+
+.component-item.clickable::after {
+  content: '🔗';
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-size: 0.8em;
+}
+
+.component-item.clickable:hover::after {
+  opacity: 0.7;
+}
+
+.component-item.clickable:hover {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-color: #0ea5e9;
+  transform: translateX(6px);
+  cursor: pointer;
+}
+
+.component-item.clickable:hover strong {
+  color: #0f172a;
+}
+
+.component-item.clickable:active {
+  transform: translateX(4px) scale(0.98);
+}
+
+/* File path styling */
+.file-path {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.15rem 0.3rem;
+  border-radius: 3px;
+  margin-top: 0.25rem;
+  display: block;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.component-item.clickable .file-path {
+  color: #475569;
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
+.component-item.clickable:hover .file-path {
+  color: #334155;
+  background-color: rgba(59, 130, 246, 0.12);
+}
+
+/* Add icons for different component types */
+.component-item strong::before {
+  content: '🔧';
+  font-size: 1em;
+  opacity: 0.8;
+}
+
+/* Frontend component icons */
+.category-section:has(.component-item strong:contains('React')) .component-item strong::before,
+.component-item strong:contains('React')::before {
+  content: '⚛️';
+}
+
+.component-item strong:contains('UI')::before,
+.component-item strong:contains('Components')::before {
+  content: '🎨';
+}
+
+.component-item strong:contains('Hooks')::before,
+.component-item strong:contains('Hook')::before {
+  content: '🪝';
+}
+
+.component-item strong:contains('Chat')::before {
+  content: '💬';
+}
+
+/* Backend component icons */
+.component-item strong:contains('Server')::before,
+.component-item strong:contains('Express')::before {
+  content: '🖥️';
+}
+
+.component-item strong:contains('API')::before,
+.component-item strong:contains('Endpoint')::before {
+  content: '🔌';
+}
+
+.component-item strong:contains('Model')::before,
+.component-item strong:contains('Provider')::before {
+  content: '🤖';
+}
+
+.component-item strong:contains('Tools')::before,
+.component-item strong:contains('Utilities')::before {
+  content: '🛠️';
+}
+
+.component-item strong:contains('Memory')::before,
+.component-item strong:contains('Storage')::before {
+  content: '💾';
+}
+
+/* API endpoint specific styling */
+.api-hierarchy .component-item {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #bbf7d0;
+}
+
+.api-hierarchy .component-item:hover {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #10b981;
+}
+
+.api-hierarchy .component-item::before {
+  background: linear-gradient(to bottom, #10b981, #059669);
+}
+
+.api-hierarchy .component-item code {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #065f46;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Editor Context Menu Styles */
+.editor-context-menu {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  min-width: 200px;
+  overflow: hidden;
+  animation: contextMenuSlideIn 0.15s ease-out;
+}
+
+@keyframes contextMenuSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.context-menu-header {
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.context-menu-header strong {
+  display: block;
+  font-size: 0.85rem;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.context-menu-header small {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  word-break: break-all;
+}
+
+.context-menu-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  background: white;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.context-menu-option:hover {
+  background: #f0f9ff;
+  color: #1e40af;
+}
+
+.context-menu-option.copy-path {
+  color: #6b7280;
+}
+
+.context-menu-option.copy-path:hover {
+  background: #f8fafc;
+  color: #374151;
+}
+
+.context-menu-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0.25rem 0;
+}
+
+.editor-icon {
+  font-size: 1em;
+  width: 1.2em;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.editor-label {
+  flex: 1;
+  font-weight: 500;
 }
 
 .loading-container {
@@ -135,6 +465,7 @@
   font-size: 0.9rem;
 }
 
+/* Mobile responsive enhancements */
 @media (max-width: 768px) {
   .architecture-page {
     padding: 10px;
@@ -147,5 +478,74 @@
   .mermaid-diagram svg {
     transform-origin: center top;
     max-width: 100%;
+  }
+
+  .category-section {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .component-item {
+    padding: 0.5rem;
+  }
+
+  .component-item strong {
+    font-size: 0.85rem;
+  }
+
+  .category-name {
+    font-size: 0.9rem;
+  }
+
+  .architecture-explanation h3 {
+    font-size: 1.1rem;
+  }
+
+  .component-item:hover {
+    transform: translateX(2px);
+  }
+
+  .component-item.clickable:hover {
+    transform: translateX(3px);
+  }
+
+  .component-item.clickable::after {
+    right: 0.5rem;
+    font-size: 0.7em;
+  }
+
+  .file-path {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.25rem;
+  }
+
+  .editor-context-menu {
+    left: 0.5rem !important;
+    right: 0.5rem;
+    min-width: auto;
+    max-width: calc(100vw - 1rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .architecture-explanation {
+    padding: 0.75rem;
+  }
+
+  .category-section {
+    padding: 0.5rem;
+  }
+
+  .component-item {
+    padding: 0.4rem;
+  }
+
+  .component-item strong {
+    font-size: 0.8rem;
+    gap: 0.3rem;
+  }
+
+  .architecture-explanation h3::before {
+    font-size: 1em;
   }
 }
