@@ -7,7 +7,7 @@ import { cerebras } from '@ai-sdk/cerebras';
 import { google } from '@ai-sdk/google';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { createVertex } from '@ai-sdk/google-vertex';
-import { defaultSystemPrompt } from './prompt';
+import { defaultSystemPrompt } from './prompts';
 
 const vertex = createVertex({
   project: 'shofifi',

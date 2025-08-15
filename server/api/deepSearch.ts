@@ -2,7 +2,7 @@ import { generateObject, type LanguageModel } from 'ai';
 import { z } from 'zod';
 import { getModelProviderById, ModelProvider } from '../modelProviders';
 import { handleChatRequest } from './chat';
-import { orchestratorSystemPrompt, summarizerSystemPrompt } from '../prompt';
+import { orchestratorSystemPrompt, summarizerSystemPrompt } from '../prompts';
 import { tools } from '../tools';
 
 // Global store for search plans

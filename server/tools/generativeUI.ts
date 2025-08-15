@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { generateText, ModelMessage } from 'ai';
 import { getModelProviderById } from '../modelProviders';
-import { generativeUiToolPrompt } from '../prompt';
+import { generativeUiToolPrompt } from '../prompts';
 
 const UI_GENERATION_MODEL_ID = 'claude-3-7-sonnet';
 
